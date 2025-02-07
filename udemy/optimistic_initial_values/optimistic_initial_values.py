@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from udemy.optimistic_initial_values.Bandit import Bandit
 
+
 def experiment():
     NUM_TRIALS = 10000
     BANDIT_PROBABILITIES = [0.2, 0.5, 0.75]

@@ -15,3 +15,4 @@ class Bandit:
         self.N += 1
         self.p_hat = ((self.N - 1) * self.p_hat + x) / self.N
 
+

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from udemy.epsilon_greedy.Bandit import Bandit
 
+
 def epsilon_greedy(bandits, epsilon):
     # True => Explore, False = Exploit
     if np.random.random() < epsilon:
