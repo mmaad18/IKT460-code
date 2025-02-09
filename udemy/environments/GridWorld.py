@@ -12,7 +12,7 @@ class GridWorld:
         self.grid[1, 1] = False
 
         # Rewards
-        self.rewards[:, :] = -0.1
+        self.rewards[:, :] = -0.0
         self.rewards[0, 3] = 1
         self.rewards[1, 3] = -1
 

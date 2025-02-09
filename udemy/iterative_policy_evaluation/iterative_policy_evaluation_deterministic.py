@@ -32,23 +32,28 @@ def get_values(gridWorld, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
     grid = gridWorld.grid
     V = np.zeros(grid.shape)
 
-    biggest_change = 1
+    biggest_change = float("inf")
     counter = 0
-    #while biggest_change >= delta:
-    while counter < 1:
+
+    while biggest_change >= delta:
         biggest_change = 0
         new_V = np.copy(V)
-        gridWorld.state = (0, 0)
+
         for i, j in np.ndindex(grid.shape):
             action = policy[i, j]
 
-            while action is not None:
-                gridWorld.step(action)
-                reward = gridWorld.get_reward()
-                V[i, j] += reward + gamma * V[gridWorld.state]
-                #biggest_change = max(biggest_change, np.abs(v - V[i, j]))
-                action = policy[gridWorld.state]
+            if action is not None:
+                gridWorld.state = (i, j)
+                next_state = gridWorld.step(action)
 
+                reward = gridWorld.get_reward()
+                new_value = reward + gamma * V[next_state]
+
+                biggest_change = max(biggest_change, abs(new_value - V[i, j]))
+
+                new_V[i, j] = new_value
+
+        V = new_V
         counter += 1
         print(f"Counter: {counter}")
 
