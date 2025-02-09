@@ -8,12 +8,11 @@ def print_policy(policy, grid):
     for i in range(grid.shape[0]):
         print("------------------------")
         for j in range(grid.shape[1]):
-            a = policy[i, j]
-
-            if a is None:
+            action = policy[i, j]
+            if action is None:
                 print("  X  |", end="")
             else:
-                print("  %s  |" % a, end="")
+                print("  %s  |" % action, end="")
         print("")
 
 
@@ -21,7 +20,7 @@ def print_values(values, grid):
     for i in range(grid.shape[0]):
         print("---------------------------")
         for j in range(grid.shape[1]):
-            v = values.get((i, j), 0)
+            v = values[i, j]
             if v >= 0:
                 print(" %.2f|" % v, end="")
             else:
@@ -29,17 +28,34 @@ def print_values(values, grid):
         print("")
 
 
-def get_values(grid, action, gamma=0.9) -> np.ndarray:
+def get_values(gridWorld, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
+    grid = gridWorld.grid
     V = np.zeros(grid.shape)
 
-    delta: float = 1e-3
+    biggest_change = 1
+    counter = 0
+    #while biggest_change >= delta:
+    while counter < 1:
+        biggest_change = 0
+        new_V = np.copy(V)
+        gridWorld.state = (0, 0)
+        for i, j in np.ndindex(grid.shape):
+            action = policy[i, j]
+
+            while action is not None:
+                gridWorld.step(action)
+                reward = gridWorld.get_reward()
+                V[i, j] += reward + gamma * V[gridWorld.state]
+                #biggest_change = max(biggest_change, np.abs(v - V[i, j]))
+                action = policy[gridWorld.state]
+
+        counter += 1
+        print(f"Counter: {counter}")
 
     return V
 
 
 def experiment():
-    THRESHOLD = 1e-3
-
     gridWorld = GridWorld((3,4), (2,0))
     grid = gridWorld.grid
 
@@ -54,10 +70,8 @@ def experiment():
     policy[2, 2] = Action.UP
     policy[2, 3] = Action.LEFT
 
-
-    a = Action.UP
-    #b = a.reverse()
-
     print_policy(policy, grid)
-    V = get_values(grid, policy)
+
+    values = get_values(gridWorld, policy)
+    print_values(values, grid)
 
