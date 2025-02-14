@@ -3,7 +3,8 @@
 #from udemy.ucb1.ucb1 import experiment
 #from udemy.thompson_sampling.thompson_sampling import experiment
 #from udemy.thompson_gaussian.thompson_gaussian import experiment
-from udemy.iterative_policy_evaluation.iterative_policy_evaluation_deterministic import experiment
+#from udemy.iterative_policy_evaluation.iterative_policy_evaluation_deterministic import experiment
+from udemy.iterative_policy_evaluation.iterative_policy_evaluation_probabilistic import experiment
 
 
 experiment()

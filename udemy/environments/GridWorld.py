@@ -30,6 +30,19 @@ class GridWorld:
         return self.state
 
 
+    def simulate(self, action: Action) -> (tuple):
+        x, y = self.state
+        dx, dy = action.move()
+
+        x = max(0, min(self.grid.shape[0] - 1, x + dx))
+        y = max(0, min(self.grid.shape[1] - 1, y + dy))
+
+        if self.grid[x, y]:
+            return (x, y)
+
+        return self.state
+
+
     def get_reward(self) -> float:
         return self.rewards[self.state]
 
