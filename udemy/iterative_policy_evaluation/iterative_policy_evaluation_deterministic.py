@@ -7,18 +7,6 @@ from udemy.environments.GridCell import GridCell
 from udemy.environments.GridWorld import GridWorld
 
 
-def print_policy(policy, grid):
-    for i in range(grid.shape[0]):
-        print("------------------------")
-        for j in range(grid.shape[1]):
-            action = policy[i, j]
-            if action is None:
-                print("  X  |", end="")
-            else:
-                print("  %s  |" % action, end="")
-        print("")
-
-
 def print_values(values, grid):
     for i in range(grid.shape[0]):
         print("---------------------------")
@@ -87,6 +75,6 @@ def experiment():
 
     gridWorld.print_policy(policy)
 
-    values = get_values(gridWorld, policy)
+    values = gridWorld.get_values(policy)
     print_values(values, grid)
 

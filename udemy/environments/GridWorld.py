@@ -29,7 +29,6 @@ class GridWorld:
 
     def print_policy(self, policy):
         border = "-" * (4 * self.shape[1] + 1)
-        #print(border)
 
         for i in range(self.shape[0]):
             print(border + "\n|", end="")
@@ -42,6 +41,37 @@ class GridWorld:
             print("")
         print(border)
 
+
+    def get_values(self, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
+        grid = self.grid
+        V = np.zeros(grid.shape)
+
+        biggest_change = float("inf")
+        counter = 0
+
+        while biggest_change >= delta:
+            biggest_change = 0
+            new_V = np.copy(V)
+
+            for i, j in np.ndindex(grid.shape):
+                action = policy[i, j]
+
+                if action is not None:
+                    self.position = (i, j)
+                    next_state = self.step(action)
+
+                    reward = self.get_reward()
+                    new_value = reward + gamma * V[next_state]
+
+                    biggest_change = max(biggest_change, abs(new_value - V[i, j]))
+
+                    new_V[i, j] = new_value
+
+            V = new_V
+            counter += 1
+            print(f"Counter: {counter}")
+
+        return V
 
 
     def _next_state(self, action: Action) -> (tuple[int, int]):
