@@ -22,12 +22,18 @@ class GridWorldWindy:
         self.action_probabilities[1, 2] = {Action.UP: 0.5, Action.RIGHT: 0.5}
 
 
-    def step(self, action: Action) -> (tuple):
+    def _next_state(self, action: Action) -> (tuple):
         x, y = self.state
-        dx, dy = action.move()
+        dx, dy = action.step()
 
         x = max(0, min(self.grid.shape[0] - 1, x + dx))
         y = max(0, min(self.grid.shape[1] - 1, y + dy))
+
+        return (x, y)
+
+
+    def step(self, action: Action) -> (tuple):
+        x, y = self.state
 
         if self.grid[x, y]:
             self.state = (x, y)
@@ -37,10 +43,6 @@ class GridWorldWindy:
 
     def simulate(self, action: Action) -> (tuple):
         x, y = self.state
-        dx, dy = action.move()
-
-        x = max(0, min(self.grid.shape[0] - 1, x + dx))
-        y = max(0, min(self.grid.shape[1] - 1, y + dy))
 
         if self.grid[x, y]:
             return (x, y)

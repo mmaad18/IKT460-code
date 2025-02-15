@@ -7,8 +7,8 @@ class Action(Enum):
     LEFT = (0, -1), "←"
     RIGHT = (0, 1), "→"
 
-    def move(self):
+    def step(self) -> (tuple[int, int]):
         return self.value[0]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value[1]

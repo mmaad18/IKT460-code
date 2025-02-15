@@ -1,6 +1,9 @@
 import numpy as np
 
 from udemy.environments.Action import Action
+from udemy.environments.CellType import CellType
+from udemy.environments.BaseCell import BaseCell
+from udemy.environments.GridCell import GridCell
 from udemy.environments.GridWorld import GridWorld
 
 
@@ -43,7 +46,7 @@ def get_values(gridWorld, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
             action = policy[i, j]
 
             if action is not None:
-                gridWorld.state = (i, j)
+                gridWorld.position = (i, j)
                 next_state = gridWorld.step(action)
 
                 reward = gridWorld.get_reward()
@@ -62,9 +65,14 @@ def get_values(gridWorld, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
 
 def experiment():
     gridWorld = GridWorld((3,4), (2,0))
-    grid = gridWorld.grid
 
-    policy = np.full(grid.shape, None, dtype=object)
+    gridWorld.grid[1, 1] = BaseCell(CellType.OBSTACLE)
+    gridWorld.grid[0, 3] = BaseCell(CellType.TERMINAL)
+    gridWorld.grid[1, 3] = BaseCell(CellType.TERMINAL)
+
+    gridWorld.print()
+
+    policy = np.full(gridWorld.shape, None, dtype=object)
     policy[0, 0] = Action.RIGHT
     policy[0, 1] = Action.RIGHT
     policy[0, 2] = Action.RIGHT
@@ -75,7 +83,9 @@ def experiment():
     policy[2, 2] = Action.UP
     policy[2, 3] = Action.LEFT
 
-    print_policy(policy, grid)
+    grid = gridWorld.grid
+
+    gridWorld.print_policy(policy)
 
     values = get_values(gridWorld, policy)
     print_values(values, grid)

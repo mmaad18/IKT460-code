@@ -45,7 +45,7 @@ def get_values(gridWorld, policy, gamma=0.9, delta=1e-3) -> np.ndarray:
 
             if actions is not None:
                 new_value = 0
-                gridWorld.state = (i, j)
+                gridWorld.position = (i, j)
 
                 for action, transition_prob in actions:
                     for action_prob in gridWorld.action_probabilities[i, j]:
