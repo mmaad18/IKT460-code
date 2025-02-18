@@ -11,15 +11,15 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 
 # Simulation Environment Proposals
 
-- Gymnasium 
-- Pygame
-- PyBullet
+- Gymnasium + Box2D
+
+### Gymnasium Environments 
+
+- https://gymnasium.farama.org/environments/box2d/car_racing/
 
 # RL Framework Proposals
 
 - Stable-Baselines3 
-- RLlib (Ray)
-- OpenAI Spinning Up
 
 
 
