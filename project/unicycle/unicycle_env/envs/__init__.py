@@ -1,1 +1,1 @@
-from unicycle_env.envs.grid_world import GridWorldEnv
+from unicycle_env.envs.car_racing import CarRacing
