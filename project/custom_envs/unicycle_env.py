@@ -62,8 +62,9 @@ class LidarRobotEnv(gym.Env):
         pass
 
     def close(self):
-        # Cleanup resources if needed
-        pass
+        if self.window is not None:
+            pygame.display.quit()
+            pygame.quit()
 
     # Helper methods
     def _create_robot(self):
