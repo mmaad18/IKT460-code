@@ -1,5 +1,3 @@
-__credits__ = ["Andrea PIERRÉ"]
-
 import math
 from typing import Optional, Union
 
@@ -31,6 +29,9 @@ except ImportError as e:
     ) from e
 
 
+from project.unicycle.unicycle_env.envs.FrictionDetector import FrictionDetector
+
+
 STATE_W = 96  # less than Atari 160x192
 STATE_H = 96
 VIDEO_W = 600
@@ -55,54 +56,6 @@ GRASS_DIM = PLAYFIELD / 20.0
 MAX_SHAPE_DIM = (
         max(GRASS_DIM, TRACK_WIDTH, TRACK_DETAIL_STEP) * math.sqrt(2) * ZOOM * SCALE
 )
-
-
-class FrictionDetector(contactListener):
-    def __init__(self, env, lap_complete_percent):
-        contactListener.__init__(self)
-        self.env = env
-        self.lap_complete_percent = lap_complete_percent
-
-    def BeginContact(self, contact):
-        self._contact(contact, True)
-
-    def EndContact(self, contact):
-        self._contact(contact, False)
-
-    def _contact(self, contact, begin):
-        tile = None
-        obj = None
-        u1 = contact.fixtureA.body.userData
-        u2 = contact.fixtureB.body.userData
-        if u1 and "road_friction" in u1.__dict__:
-            tile = u1
-            obj = u2
-        if u2 and "road_friction" in u2.__dict__:
-            tile = u2
-            obj = u1
-        if not tile:
-            return
-
-        # inherit tile color from env
-        tile.color[:] = self.env.road_color
-        if not obj or "tiles" not in obj.__dict__:
-            return
-        if begin:
-            obj.tiles.add(tile)
-            if not tile.road_visited:
-                tile.road_visited = True
-                self.env.reward += 1000.0 / len(self.env.track)
-                self.env.tile_visited_count += 1
-
-                # Lap is considered completed if enough % of the track was covered
-                if (
-                        tile.idx == 0
-                        and self.env.tile_visited_count / len(self.env.track)
-                        > self.lap_complete_percent
-                ):
-                    self.env.new_lap = True
-        else:
-            obj.tiles.remove(tile)
 
 
 class CarRacing(gym.Env, EzPickle):
