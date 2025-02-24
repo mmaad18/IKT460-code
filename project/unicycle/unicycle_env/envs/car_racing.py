@@ -9,24 +9,11 @@ from gymnasium.envs.box2d.car_dynamics import Car
 from gymnasium.error import DependencyNotInstalled, InvalidAction
 from gymnasium.utils import EzPickle
 
+import Box2D
+from Box2D.b2 import contactListener, fixtureDef, polygonShape
 
-try:
-    import Box2D
-    from Box2D.b2 import contactListener, fixtureDef, polygonShape
-except ImportError as e:
-    raise DependencyNotInstalled(
-        'Box2D is not installed, you can install it by run `pip install swig` followed by `pip install "gymnasium[box2d]"`'
-    ) from e
-
-try:
-    # As pygame is necessary for using the environment (reset and step) even without a render mode
-    #   therefore, pygame is a necessary import for the environment.
-    import pygame
-    from pygame import gfxdraw
-except ImportError as e:
-    raise DependencyNotInstalled(
-        'pygame is not installed, run `pip install "gymnasium[box2d]"`'
-    ) from e
+import pygame
+from pygame import gfxdraw
 
 
 from project.unicycle.unicycle_env.envs.FrictionDetector import FrictionDetector
@@ -59,101 +46,6 @@ MAX_SHAPE_DIM = (
 
 
 class CarRacing(gym.Env, EzPickle):
-    """
-    ## Description
-    The easiest control task to learn from pixels - a top-down
-    racing environment. The generated track is random every episode.
-
-    Some indicators are shown at the bottom of the window along with the
-    state RGB buffer. From left to right: true speed, four ABS sensors,
-    steering wheel position, and gyroscope.
-    To play yourself (it's rather fast for humans), type:
-    ```shell
-    python gymnasium/envs/box2d/car_racing.py
-    ```
-    Remember: it's a powerful rear-wheel drive car - don't press the accelerator
-    and turn at the same time.
-
-    ## Action Space
-    If continuous there are 3 actions :
-    - 0: steering, -1 is full left, +1 is full right
-    - 1: gas
-    - 2: braking
-
-    If discrete there are 5 actions:
-    - 0: do nothing
-    - 1: steer left
-    - 2: steer right
-    - 3: gas
-    - 4: brake
-
-    ## Observation Space
-
-    A top-down 96x96 RGB image of the car and race track.
-
-    ## Rewards
-    The reward is -0.1 every frame and +1000/N for every track tile visited, where N is the total number of tiles
-     visited in the track. For example, if you have finished in 732 frames, your reward is 1000 - 0.1*732 = 926.8 points.
-
-    ## Starting State
-    The car starts at rest in the center of the road.
-
-    ## Episode Termination
-    The episode finishes when all the tiles are visited. The car can also go outside the playfield -
-     that is, far off the track, in which case it will receive -100 reward and die.
-
-    ## Arguments
-
-    ```python
-    >>> import gymnasium as gym
-    >>> env = gym.make("CarRacing-v3", render_mode="rgb_array", lap_complete_percent=0.95, domain_randomize=False, continuous=False)
-    >>> env
-    <TimeLimit<OrderEnforcing<PassiveEnvChecker<CarRacing<CarRacing-v3>>>>>
-
-    ```
-
-    * `lap_complete_percent=0.95` dictates the percentage of tiles that must be visited by
-     the agent before a lap is considered complete.
-
-    * `domain_randomize=False` enables the domain randomized variant of the environment.
-     In this scenario, the background and track colours are different on every reset.
-
-    * `continuous=True` converts the environment to use discrete action space.
-     The discrete action space has 5 actions: [do nothing, left, right, gas, brake].
-
-    ## Reset Arguments
-
-    Passing the option `options["randomize"] = True` will change the current colour of the environment on demand.
-    Correspondingly, passing the option `options["randomize"] = False` will not change the current colour of the environment.
-    `domain_randomize` must be `True` on init for this argument to work.
-
-    ```python
-    >>> import gymnasium as gym
-    >>> env = gym.make("CarRacing-v3", domain_randomize=True)
-
-    # normal reset, this changes the colour scheme by default
-    >>> obs, _ = env.reset()
-
-    # reset with colour scheme change
-    >>> randomize_obs, _ = env.reset(options={"randomize": True})
-
-    # reset with no colour scheme change
-    >>> non_random_obs, _ = env.reset(options={"randomize": False})
-
-    ```
-
-    ## Version History
-    - v2: Change truncation to termination when finishing the lap (1.0.0)
-    - v1: Change track completion logic and add domain randomization (0.24.0)
-    - v0: Original version
-
-    ## References
-    - Chris Campbell (2014), http://www.iforce2d.net/b2dtut/top-down-car.
-
-    ## Credits
-    Created by Oleg Klimov
-    """
-
     metadata = {
         "render_modes": [
             "human",
@@ -168,19 +60,13 @@ class CarRacing(gym.Env, EzPickle):
             render_mode: Optional[str] = None,
             verbose: bool = False,
             lap_complete_percent: float = 0.95,
-            domain_randomize: bool = False,
-            continuous: bool = True,
     ):
         EzPickle.__init__(
             self,
             render_mode,
             verbose,
             lap_complete_percent,
-            domain_randomize,
-            continuous,
         )
-        self.continuous = continuous
-        self.domain_randomize = domain_randomize
         self.lap_complete_percent = lap_complete_percent
         self._init_colors()
 
@@ -204,14 +90,10 @@ class CarRacing(gym.Env, EzPickle):
 
         # This will throw a warning in tests/envs/test_envs in utils/env_checker.py as the space is not symmetric
         #   or normalised however this is not possible here so ignore
-        if self.continuous:
-            self.action_space = spaces.Box(
-                np.array([-1, 0, 0]).astype(np.float32),
-                np.array([+1, +1, +1]).astype(np.float32),
-            )  # steer, gas, brake
-        else:
-            self.action_space = spaces.Discrete(5)
-            # do nothing, left, right, gas, brake
+        self.action_space = spaces.Box(
+            np.array([-1, 0, 0]).astype(np.float32),
+            np.array([+1, +1, +1]).astype(np.float32),
+        )  # steer, gas, brake
 
         self.observation_space = spaces.Box(
             low=0, high=255, shape=(STATE_H, STATE_W, 3), dtype=np.uint8
@@ -229,35 +111,9 @@ class CarRacing(gym.Env, EzPickle):
         self.car.destroy()
 
     def _init_colors(self):
-        if self.domain_randomize:
-            # domain randomize the bg and grass colour
-            self.road_color = self.np_random.uniform(0, 210, size=3)
-
-            self.bg_color = self.np_random.uniform(0, 210, size=3)
-
-            self.grass_color = np.copy(self.bg_color)
-            idx = self.np_random.integers(3)
-            self.grass_color[idx] += 20
-        else:
-            # default colours
-            self.road_color = np.array([102, 102, 102])
-            self.bg_color = np.array([102, 204, 102])
-            self.grass_color = np.array([102, 230, 102])
-
-    def _reinit_colors(self, randomize):
-        assert (
-            self.domain_randomize
-        ), "domain_randomize must be True to use this function."
-
-        if randomize:
-            # domain randomize the bg and grass colour
-            self.road_color = self.np_random.uniform(0, 210, size=3)
-
-            self.bg_color = self.np_random.uniform(0, 210, size=3)
-
-            self.grass_color = np.copy(self.bg_color)
-            idx = self.np_random.integers(3)
-            self.grass_color[idx] += 20
+        self.road_color = np.array([102, 102, 102])
+        self.bg_color = np.array([102, 204, 102])
+        self.grass_color = np.array([102, 230, 102])
 
     def _create_track(self):
         CHECKPOINTS = 12
@@ -468,14 +324,6 @@ class CarRacing(gym.Env, EzPickle):
         self.new_lap = False
         self.road_poly = []
 
-        if self.domain_randomize:
-            randomize = True
-            if isinstance(options, dict):
-                if "randomize" in options:
-                    randomize = options["randomize"]
-
-            self._reinit_colors(randomize)
-
         while True:
             success = self._create_track()
             if success:
@@ -494,20 +342,10 @@ class CarRacing(gym.Env, EzPickle):
     def step(self, action: Union[np.ndarray, int]):
         assert self.car is not None
         if action is not None:
-            if self.continuous:
-                action = action.astype(np.float64)
-                self.car.steer(-action[0])
-                self.car.gas(action[1])
-                self.car.brake(action[2])
-            else:
-                if not self.action_space.contains(action):
-                    raise InvalidAction(
-                        f"you passed the invalid action `{action}`. "
-                        f"The supported action_space is `{self.action_space}`"
-                    )
-                self.car.steer(-0.6 * (action == 1) + 0.6 * (action == 2))
-                self.car.gas(0.2 * (action == 3))
-                self.car.brake(0.8 * (action == 4))
+            action = action.astype(np.float64)
+            self.car.steer(-action[0])
+            self.car.gas(action[1])
+            self.car.brake(action[2])
 
         self.car.step(1.0 / FPS)
         self.world.Step(1.0 / FPS, 6 * 30, 2 * 30)
@@ -749,6 +587,13 @@ class CarRacing(gym.Env, EzPickle):
             pygame.display.quit()
             self.isopen = False
             pygame.quit()
+
+
+"""
+#######################
+#    HUMAN CONTROL    #
+#######################
+"""
 
 
 if __name__ == "__main__":
