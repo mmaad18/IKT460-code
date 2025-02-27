@@ -3,12 +3,12 @@ import gymnasium
 import unicycle_env
 import numpy as np
 
-env = gymnasium.make('unicycle_env/CarRacing-v0')
+env = gymnasium.make('unicycle_env/UniCycleBasicEnv-v0')
 
 observation, info = env.reset()
 for _ in range(1000):
     # this is where you would insert your policy
-    action = np.array([-0.05, 0.2, 0.0])
+    action = env.action_space.sample()
 
     # step (transition) through the environment with the action
     # receiving the next observation, reward and if the episode has terminated or truncated
