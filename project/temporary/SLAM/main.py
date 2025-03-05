@@ -29,11 +29,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                
-            if pygame.mouse.get_focused():
-                sensorON = True
-            elif not pygame.mouse.get_focused():
-                sensorON = False
+
+            sensorON = pygame.mouse.get_focused()
                 
         if sensorON:
             position = pygame.mouse.get_pos()

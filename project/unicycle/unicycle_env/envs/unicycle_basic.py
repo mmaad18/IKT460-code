@@ -20,20 +20,10 @@ class UniCycleBasicEnv(gym.Env):
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0, high=1, shape=(10,), dtype=np.float32)
 
-        # Initialize Box2D world and create agents
-        self.world = Box2D.b2World()
-        self.robot = self.world.CreateDynamicBody(position=(0, 0))
-        self.robot.CreateCircleFixture(radius=0.5, density=1.0, friction=0.3)
-
         self.window = None
         self.clock = None
 
     def step(self, action):
-        action = action.astype(np.float64)
-        force_vector = vec2(*action)
-        self.robot.ApplyForceToCenter(force_vector, True)
-        self.world.Step(1.0/60.0, 6*30, 2*30)
-
         observation = self._get_observation()
         reward = self._calculate_reward(observation)
         terminated = self._is_terminated(observation)
@@ -46,8 +36,6 @@ class UniCycleBasicEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         # Reset the environment to an initial state
-        self.robot.position = (0, 0)
-        self.robot.linearVelocity = (0, 0)
 
         info = {}
 

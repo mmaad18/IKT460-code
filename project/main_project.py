@@ -6,7 +6,7 @@ import numpy as np
 env = gymnasium.make('unicycle_env/UniCycleBasicEnv-v0')
 
 observation, info = env.reset()
-for _ in range(1000):
+for _ in range(10000):
     # this is where you would insert your policy
     action = env.action_space.sample()
 
