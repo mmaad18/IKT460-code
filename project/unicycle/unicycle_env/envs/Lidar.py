@@ -1,63 +1,41 @@
-import pygame
 import math
 import numpy as np
 
 
 def add_uncertainty(distance, angle, sigma):
-    mean = np.array([distance, angle])
-    covariance = np.diag(sigma**2)
+    noisy_distance = max(np.random.normal(distance, sigma[0]), 0)
+    noisy_angle = angle + np.random.normal(0, sigma[1])
 
-    distance, angle = np.random.multivariate_normal(mean, covariance)
-    distance = max(distance, 0)
-    angle = max(angle, 0)
-
-    return [distance, angle]
+    return [noisy_distance, noisy_angle]
 
 
 class Lidar:
-    def __init__(self, Range, Map, Uncertainty):
-        pygame.init()
-
-        self.speed = 4
-        self.position = (0, 0)
-        self.Range = Range
-        self.sigma = np.array([Uncertainty[0], Uncertainty[1]])
-        self.Map = Map
-        self.W, self.H = pygame.display.get_surface().get_size()
+    def __init__(self, environment: LidarEnvironment, distance: int, uncertainty):
+        self.environment = environment
+        self.distance = distance
+        self.sigma = np.array(uncertainty, dtype=np.float32)
+        self.W, self.H = environment.get_size()
 
 
-    def distance(self, measurement):
-        return np.linalg.norm(measurement - self.position)
-
-
-    def measurement(self, num_rays=60):
+    def measurement(self, position, num_rays=60):
         data = []
-        x1, y1 = self.position
+        x1, y1 = position
 
-        for angle in np.linspace(0, 2*np.pi, num_rays, False):
-            x2, y2 = (x1 + self.Range * math.cos(angle), y1 - self.Range * math.sin(angle))
+        for angle in np.linspace(0, 2 * np.pi, num_rays, False):
+            for r in range(0, self.distance, 2):
+                x2 = int(x1 + r * math.cos(angle))
+                y2 = int(y1 - r * math.sin(angle))
 
-            for i in range(0, 100):
-                u = i / 100
+                if 0 <= x2 < self.W and 0 <= y2 < self.H:
+                    color = self.environment.get_at((x2, y2))
 
-                x = int(x2 * u + x1 * (1 - u))
-                y = int(y2 * u + y1 * (1 - u))
-
-                if 0 < x < self.W and 0 < y < self.H:
-                    color = self.Map.get_at((x, y))
-
-                    if (color[0], color[1], color[2]) == (0, 0, 0):
-                        distance = self.distance((x, y))
-                        output = add_uncertainty(distance, angle, self.sigma)
-                        output.append(self.position)
-
-                        data.append(output)
+                    if color[:3] == (0, 0, 0):
+                        noisy_measurement = add_uncertainty(r, angle, self.sigma)
+                        noisy_measurement.append(position)
+                        data.append(noisy_measurement)
                         break
 
-        if len(data) > 0:
-            return data
-        else:
-            return False
+        return data if data else False
 
 
 

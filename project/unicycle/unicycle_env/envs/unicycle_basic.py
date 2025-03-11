@@ -6,9 +6,6 @@ import pygame
 import numpy as np
 from gymnasium.core import RenderFrame, ActType, ObsType
 
-import Box2D
-from Box2D.b2 import vec2
-
 
 class UniCycleBasicEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
@@ -23,6 +20,7 @@ class UniCycleBasicEnv(gym.Env):
         self.window = None
         self.clock = None
 
+
     def step(self, action):
         observation = self._get_observation()
         reward = self._calculate_reward(observation)
@@ -34,6 +32,7 @@ class UniCycleBasicEnv(gym.Env):
 
         return observation, reward, terminated, False, info
 
+
     def reset(self, seed=None, options=None):
         # Reset the environment to an initial state
 
@@ -41,22 +40,27 @@ class UniCycleBasicEnv(gym.Env):
 
         return self._get_observation(), info
 
+
     def _get_observation(self):
         # Simulate LIDAR readings or other sensor data
         # Return as a numpy array
         return np.random.rand(10).astype(np.float32)
 
+
     def _calculate_reward(self, observation):
         # Define a reward function based on the observation
         return np.sum(observation)  # Placeholder
+
 
     def _is_terminated(self, observation):
         # Define a condition to end the episode
         return np.any(observation > 0.9)  # Placeholder
 
+
     def render(self, mode='human'):
         if self.render_mode == "rgb_array":
             return self._render_frame()
+
 
     def _render_frame(self):
         if self.window is None and self.render_mode == "human":
