@@ -11,6 +11,9 @@ class UniCycleBasicEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
     def __init__(self, render_mode=None):
+        from project.unicycle.unicycle_env.envs import LidarEnvironment
+        from project.unicycle.unicycle_env.envs import Lidar
+
         self.window_size = 512
         self.render_mode = render_mode
 
@@ -19,6 +22,8 @@ class UniCycleBasicEnv(gym.Env):
 
         self.window = None
         self.clock = None
+
+        self.environment = LidarEnvironment.LidarEnvironment("project/unicycle/unicycle_env/envs/SLAM_MAP_1H.png", (600, 1200))
 
 
     def step(self, action):
@@ -43,7 +48,6 @@ class UniCycleBasicEnv(gym.Env):
 
     def _get_observation(self):
         # Simulate LIDAR readings or other sensor data
-        # Return as a numpy array
         return np.random.rand(10).astype(np.float32)
 
 
@@ -74,14 +78,12 @@ class UniCycleBasicEnv(gym.Env):
         canvas.fill((255, 255, 255))
 
         if self.render_mode == "human":
-            # The following line copies our drawings from `canvas` to the visible window
+            # Copy drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
             pygame.event.pump()
             pygame.display.update()
 
-            # We need to ensure that human-rendering occurs at the predefined framerate.
-            # The following line will automatically add a delay to
-            # keep the framerate stable.
+            # Automatically add a delay to keep the framerate stable.
             self.clock.tick(self.metadata["render_fps"])
         else:  # rgb_array
             return np.transpose(

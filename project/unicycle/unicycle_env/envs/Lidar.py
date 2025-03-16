@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from project.unicycle.unicycle_env.envs.LidarEnvironment import LidarEnvironment
 
 
 def add_uncertainty(distance, angle, sigma):
@@ -10,11 +11,11 @@ def add_uncertainty(distance, angle, sigma):
 
 
 class Lidar:
-    def __init__(self, environment: LidarEnvironment, distance: int, uncertainty):
+    def __init__(self, environment: LidarEnvironment, distance: int, uncertainty: (int, int)):
         self.environment = environment
         self.distance = distance
         self.sigma = np.array(uncertainty, dtype=np.float32)
-        self.W, self.H = environment.get_size()
+        self.width, self.height = environment.get_size()
 
 
     def measurement(self, position, num_rays=60):
@@ -26,7 +27,7 @@ class Lidar:
                 x2 = int(x1 + r * math.cos(angle))
                 y2 = int(y1 - r * math.sin(angle))
 
-                if 0 <= x2 < self.W and 0 <= y2 < self.H:
+                if 0 <= x2 < self.width and 0 <= y2 < self.height:
                     color = self.environment.get_at((x2, y2))
 
                     if color[:3] == (0, 0, 0):
