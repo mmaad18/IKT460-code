@@ -1,42 +1,42 @@
 import math
 import numpy as np
-from project.unicycle.unicycle_env.envs.LidarEnvironment import LidarEnvironment
-
-
-def add_uncertainty(distance, angle, sigma):
-    noisy_distance = max(np.random.normal(distance, sigma[0]), 0)
-    noisy_angle = angle + np.random.normal(0, sigma[1])
-
-    return [noisy_distance, noisy_angle]
+from unicycle_env.envs.LidarEnvironment import LidarEnvironment
+from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 
 
 class Lidar:
-    def __init__(self, environment: LidarEnvironment, distance: int, uncertainty: (int, int)):
+    def __init__(self, environment: LidarEnvironment, max_distance: int, uncertainty: tuple[int, float]):
         self.environment = environment
-        self.distance = distance
-        self.sigma = np.array(uncertainty, dtype=np.float32)
+        self.max_distance = max_distance
         self.width, self.height = environment.get_size()
+        self.sigma = np.array(uncertainty, dtype=np.float32)
 
 
-    def measurement(self, position, num_rays=60):
-        data = []
+    def measurement(
+            self,
+            position: tuple[float, float],
+            num_rays: int,
+            step: int = 2
+    ) -> list[MeasurementDTO]:
+        measurements = []
         x1, y1 = position
 
         for angle in np.linspace(0, 2 * np.pi, num_rays, False):
-            for r in range(0, self.distance, 2):
-                x2 = int(x1 + r * math.cos(angle))
-                y2 = int(y1 - r * math.sin(angle))
+            cos_a = math.cos(angle)
+            sin_a = math.sin(angle)
+
+            for distance in range(0, self.max_distance, step):
+                x2 = round(x1 + distance * cos_a)
+                y2 = round(y1 - distance * sin_a)
 
                 if 0 <= x2 < self.width and 0 <= y2 < self.height:
                     color = self.environment.get_at((x2, y2))
-
                     if color[:3] == (0, 0, 0):
-                        noisy_measurement = add_uncertainty(r, angle, self.sigma)
-                        noisy_measurement.append(position)
-                        data.append(noisy_measurement)
+                        measurements.append(MeasurementDTO(distance, angle, position))
                         break
 
-        return data if data else False
+        return measurements
+
 
 
 

@@ -1,16 +1,21 @@
 import math
 import pygame
+from pygame.color import Color
+
+from unicycle_env.envs.ObstacleDTO import ObstacleDTO
+from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 
 
-def lidar_data_2_pos(distance, angle, position):
-    x = distance * math.cos(angle) + position[0]
-    y = - distance * math.sin(angle) + position[1]
+def lidar_data_2_pos(m: MeasurementDTO) -> tuple[float, float]:
+    x, y = m.position
+    dx = m.distance * math.cos(m.angle)
+    dy = m.distance * math.sin(m.angle)
 
-    return int(x), int(y)
+    return x + dx, y - dy
 
 
 class LidarEnvironment:
-    def __init__(self, map_image_path: str, map_dimensions: (int, int), map_window_name="LIDAR SIM"):
+    def __init__(self, map_image_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM"):
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
@@ -20,51 +25,68 @@ class LidarEnvironment:
         self.surface.blit(self.surface_load, (0, 0))
 
         self.lidar_surface = self.surface.copy()
+        self.dynamic_obstacles: list[ObstacleDTO] = []
 
-        self.dynamic_obstacles = []
 
-    def update(self, data):
+    def update(self, lidar_data: list[MeasurementDTO]):
+        self.surface.blit(self.surface_load, (0, 0))
         self.move_obstacles()
         self.draw_obstacles()
-        self.draw_lidar_data(data)
+        self.draw_lidar_data(lidar_data)
         pygame.display.update()
 
-    def get_size(self) -> tuple:
+
+    def get_size(self) -> tuple[int, int]:
         return self.map_dimensions
 
-    def get_at(self, position):
+
+    def get_at(self, position: tuple[int, int]) -> Color:
         """ Returns pixel color at a given position (checks obstacles first) """
+        x, y = position
+
         for obstacle in self.dynamic_obstacles:
-            x, y = position
-            ox, oy = obstacle["pos"]
-            w, h = obstacle["size"]
+            xo, yo = obstacle.position
+            w, h = obstacle.size
 
-            if ox <= x <= ox + w and oy <= y <= oy + h:  # Inside obstacle
-                return obstacle["color"]
+            # Inside obstacle
+            if xo <= x <= xo + w and yo <= y <= yo + h:
+                return obstacle.color
 
-        return self.surface.get_at((int(position[0]), int(position[1])))
+        return self.surface.get_at((int(x), int(y)))
 
-    def draw_lidar_data(self, data):
+
+    """
+    AGENT
+    """
+    def draw_lidar_data(self, lidar_data: list[MeasurementDTO]):
         self.lidar_surface = self.surface.copy()
 
-        for element in data:
-            point = lidar_data_2_pos(element[0], element[1], element[2])
+        for m in lidar_data:
+            x, y = lidar_data_2_pos(m)
 
-            self.lidar_surface.set_at((int(point[0]), int(point[1])), (255, 0, 0))
+            self.lidar_surface.set_at((round(x), round(y)), (255, 0, 0))
+
+
+    def draw_agent(self, position: tuple[float, float], color=(0, 255, 0), radius=5):
+        pygame.draw.circle(self.surface, color, (round(position[0]), round(position[1])), radius)
+
 
     """
     OBSTACLES
     """
-    def add_obstacle(self, position=(0, 0), size=(10, 10), color=(0, 0, 0)):
-        self.dynamic_obstacles.append({"pos": position, "size": size, "color": color})
+    def add_obstacle(self, position: tuple[int, int], size: tuple[int, int], color=(0, 0, 0)):
+        self.dynamic_obstacles.append(ObstacleDTO(position, size, color))
+
 
     def move_obstacles(self):
         for obstacle in self.dynamic_obstacles:
-            obstacle["pos"] = (obstacle["pos"][0] + 2, obstacle["pos"][1])  # Moves right
+            ox, oy = obstacle.position
+            obstacle.position = (ox + 2, oy)  # Move right
+
 
     def draw_obstacles(self):
         for obstacle in self.dynamic_obstacles:
-            pygame.draw.rect(self.surface, obstacle["color"], (obstacle["pos"], obstacle["size"]))
+            pygame.draw.rect(self.surface, obstacle.color, (obstacle.position, obstacle.size))
 
 
 

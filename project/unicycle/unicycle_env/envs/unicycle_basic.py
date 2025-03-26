@@ -6,6 +6,8 @@ import pygame
 import numpy as np
 from gymnasium.core import RenderFrame, ActType, ObsType
 
+from unicycle_env.envs.AgentDTO import AgentDTO
+
 
 class UniCycleBasicEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
@@ -14,16 +16,21 @@ class UniCycleBasicEnv(gym.Env):
         from project.unicycle.unicycle_env.envs import LidarEnvironment
         from project.unicycle.unicycle_env.envs import Lidar
 
-        self.window_size = 512
         self.render_mode = render_mode
-
-        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0, high=1, shape=(10,), dtype=np.float32)
-
-        self.window = None
         self.clock = None
+        self.window = None
+        self.window_size = 512
+        self.map_path = "project/unicycle/unicycle_env/envs/SLAM_MAP_1H.png"
+        self.map_dimensions = (600, 1200)
 
-        self.environment = LidarEnvironment.LidarEnvironment("project/unicycle/unicycle_env/envs/SLAM_MAP_1H.png", (600, 1200))
+        self.environment = LidarEnvironment.LidarEnvironment(self.map_path, self.map_dimensions)
+        self.lidar = Lidar.Lidar(self.environment, max_distance=100, uncertianty=(5, 0.1))
+
+        self.agente = AgentDTO(position=(100.0, 100.0), angle=0.0, size=(20, 10), color=pygame.Color("green"))
+
+        self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), shape=(2,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0.0, high=200.0, shape=(60,), dtype=np.float32)  # one float per LIDAR ray
+
 
 
     def step(self, action):
@@ -48,7 +55,7 @@ class UniCycleBasicEnv(gym.Env):
 
     def _get_observation(self):
         # Simulate LIDAR readings or other sensor data
-        return np.random.rand(10).astype(np.float32)
+        return self.lidar.measurement(self.agent_position, 60)
 
 
     def _calculate_reward(self, observation):
@@ -89,6 +96,7 @@ class UniCycleBasicEnv(gym.Env):
             return np.transpose(
                 np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
             )
+
 
     def close(self):
         if self.window is not None:
