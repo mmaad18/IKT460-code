@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pygame.color import Color
+import math
 
 
 @dataclass

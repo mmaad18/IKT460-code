@@ -9,8 +9,8 @@ class MeasurementDTO:
     position: tuple[float, float]
 
     def to_cartesian(self) -> tuple[float, float]:
-        x = self.position[0] + self.distance * math.cos(self.angle)
-        y = self.position[1] - self.distance * math.sin(self.angle)
+        x = self.position[0] + self.distance * np.cos(self.angle)
+        y = self.position[1] - self.distance * np.sin(self.angle)
         return x, y
 
 

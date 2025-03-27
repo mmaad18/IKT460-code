@@ -4,14 +4,7 @@ from pygame.color import Color
 
 from unicycle_env.envs.ObstacleDTO import ObstacleDTO
 from unicycle_env.envs.MeasurementDTO import MeasurementDTO
-
-
-def lidar_data_2_pos(m: MeasurementDTO) -> tuple[float, float]:
-    x, y = m.position
-    dx = m.distance * math.cos(m.angle)
-    dy = m.distance * math.sin(m.angle)
-
-    return x + dx, y - dy
+from unicycle_env.envs.AgentDTO import AgentDTO
 
 
 class LidarEnvironment:
@@ -28,11 +21,12 @@ class LidarEnvironment:
         self.dynamic_obstacles: list[ObstacleDTO] = []
 
 
-    def update(self, lidar_data: list[MeasurementDTO]):
+    def update(self, agent: AgentDTO, lidar_data: list[MeasurementDTO]):
         self.surface.blit(self.surface_load, (0, 0))
         self.move_obstacles()
         self.draw_obstacles()
         self.draw_lidar_data(lidar_data)
+        self.draw_agent(agent)
         pygame.display.update()
 
 
@@ -62,13 +56,16 @@ class LidarEnvironment:
         self.lidar_surface = self.surface.copy()
 
         for m in lidar_data:
-            x, y = lidar_data_2_pos(m)
+            x, y = m.to_cartesian()
 
-            self.lidar_surface.set_at((round(x), round(y)), (255, 0, 0))
+            self.lidar_surface.set_at((round(x), round(y)), Color("red"))
+
+        self.surface.blit(self.lidar_surface, (0, 0))
 
 
-    def draw_agent(self, position: tuple[float, float], color=(0, 255, 0), radius=5):
-        pygame.draw.circle(self.surface, color, (round(position[0]), round(position[1])), radius)
+    def draw_agent(self, agent: AgentDTO):
+        polygon = agent.get_polygon()
+        pygame.draw.polygon(self.surface, agent.color, polygon)
 
 
     """
