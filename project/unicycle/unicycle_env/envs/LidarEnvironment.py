@@ -52,7 +52,7 @@ class LidarEnvironment:
     """
     AGENT
     """
-    def draw_lidar_data(self, lidar_data: list[MeasurementDTO], point_radius: int = 2):
+    def draw_lidar_data(self, lidar_data: list[MeasurementDTO], point_radius: float = 2.0):
         self.lidar_surface = self.surface.copy()
 
         for m in lidar_data:

@@ -29,8 +29,8 @@ class UniCycleBasicEnv(gym.Env):
         self.agent = AgentDTO(position=(500.0, 500.0), angle=0.0, size=(20, 10), color=Color("green"))
 
         self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0.0, high=500.0, shape=(60,), dtype=np.float32)  # one float per LIDAR ray
-
+        # Angle + distance per LIDAR ray
+        self.observation_space = spaces.Box(low=0.0, high=(500.0+100.0), shape=(120,), dtype=np.float32)
 
 
     def step(self, action: np.ndarray):
@@ -39,16 +39,17 @@ class UniCycleBasicEnv(gym.Env):
 
         # LIDAR observation
         measurements = self.lidar.measurement(self.agent.position)
-        observation = np.array([m.distance for m in measurements], dtype=np.float32)
+        obs_2d = np.array([[m.distance, m.angle] for m in measurements], dtype=np.float32)
+        obs_flat = obs_2d.flatten()
 
-        reward = self._calculate_reward(observation)
-        terminated = self._is_terminated(observation)
+        reward = self._calculate_reward(obs_flat)
+        terminated = self._is_terminated(obs_flat)
         info = {}
 
         if self.render_mode == "human":
             self._render_frame(measurements)
 
-        return observation, reward, terminated, False, info
+        return obs_flat, reward, terminated, False, info
 
 
     def reset(self, seed=None, options=None):
@@ -62,7 +63,8 @@ class UniCycleBasicEnv(gym.Env):
 
     def _get_observation(self):
         measurements = self.lidar.measurement(self.agent.position)
-        return np.array([m.distance for m in measurements], dtype=np.float32)
+        obs_2d = np.array([[m.distance, m.angle] for m in measurements], dtype=np.float32)
+        return obs_2d.flatten()
 
 
     def _apply_action(self, action: np.ndarray):

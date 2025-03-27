@@ -8,7 +8,7 @@ env = gymnasium.make('unicycle_env/UniCycleBasicEnv-v0')
 observation, info = env.reset()
 for _ in range(10000):
     # this is where you would insert your policy
-    action = env.action_space.sample()
+    action = np.array([0.0, 0.5], dtype=np.float32)
 
     # step (transition) through the environment with the action
     # receiving the next observation, reward and if the episode has terminated or truncated
