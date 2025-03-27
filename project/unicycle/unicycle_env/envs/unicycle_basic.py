@@ -14,7 +14,7 @@ from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 
 
 class UniCycleBasicEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 50}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 10}
 
     def __init__(self, render_mode=None):
         self.render_mode = render_mode
@@ -24,9 +24,9 @@ class UniCycleBasicEnv(gym.Env):
         self.map_dimensions = (1200, 600)
 
         self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
-        self.lidar = Lidar(self.environment, max_distance=500, num_rays=60, uncertainty=(5, 0.1))
+        self.lidar = Lidar(self.environment, max_distance=500, num_rays=60, uncertainty=(0.5, 0.01))
 
-        self.agent = AgentDTO(position=(100.0, 100.0), angle=0.0, size=(20, 10), color=Color("green"))
+        self.agent = AgentDTO(position=(500.0, 500.0), angle=0.0, size=(20, 10), color=Color("green"))
 
         self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0.0, high=500.0, shape=(60,), dtype=np.float32)  # one float per LIDAR ray
@@ -54,7 +54,7 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.agent.position = (100.0, 100.0)
+        self.agent.position = (500.0, 500.0)
         self.agent.angle = 0.0
 
         return self._get_observation(), {}
@@ -92,28 +92,15 @@ class UniCycleBasicEnv(gym.Env):
     def _render_frame(self, lidar_data: list[MeasurementDTO]):
         self.environment.update(self.agent, lidar_data)
 
-        if self.window is None and self.render_mode == "human":
+        if self.window is None:
             pygame.init()
-            pygame.display.init()
             self.window = pygame.display.set_mode(self.map_dimensions)
-        if self.clock is None and self.render_mode == "human":
+        if self.clock is None:
             self.clock = pygame.time.Clock()
 
-        canvas = pygame.Surface(self.map_dimensions)
-        canvas.fill((255, 255, 255))
-
-        if self.render_mode == "human":
-            # Copy drawings from `canvas` to the visible window
-            self.window.blit(canvas, canvas.get_rect())
-            pygame.event.pump()
-            pygame.display.update()
-
-            # Automatically add a delay to keep the framerate stable.
-            self.clock.tick(self.metadata["render_fps"])
-        else:  # rgb_array
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
-            )
+        self.window.blit(self.environment.surface, (0, 0))
+        pygame.display.update()
+        self.clock.tick(self.metadata["render_fps"])
 
 
     def render(self, mode='human'):

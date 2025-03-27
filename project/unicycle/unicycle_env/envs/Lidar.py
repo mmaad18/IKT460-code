@@ -8,18 +8,18 @@ from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 
 
 class Lidar:
-    def __init__(self, environment: LidarEnvironment, max_distance: int, num_rays: int, uncertainty: tuple[int, float]):
+    def __init__(self, environment: LidarEnvironment, max_distance: int, num_rays: int, uncertainty: tuple[float, float]):
         self.environment = environment
         self.max_distance = max_distance
         self.num_rays = num_rays
         self.width, self.height = environment.get_size()
-        self.sigma = np.array(uncertainty, dtype=np.float32)
+        self.sigma = uncertainty
 
 
     def measurement(
             self,
             position: tuple[float, float],
-            step: int = 2
+            step: int = 1
     ) -> list[MeasurementDTO]:
         measurements = []
         x1, y1 = position
