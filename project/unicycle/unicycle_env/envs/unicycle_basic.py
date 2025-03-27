@@ -98,6 +98,8 @@ class UniCycleBasicEnv(gym.Env):
         if self.clock is None:
             self.clock = pygame.time.Clock()
 
+        pygame.event.pump()
+
         self.window.blit(self.environment.surface, (0, 0))
         pygame.display.update()
         self.clock.tick(self.metadata["render_fps"])
