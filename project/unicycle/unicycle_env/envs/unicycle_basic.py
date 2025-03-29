@@ -37,6 +37,7 @@ class UniCycleBasicEnv(gym.Env):
         self.grid_resolution = 10
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         self.prev_coverage = 0
+        self.collision_penalty = 10.0
 
 
     def step(self, action: np.ndarray):
@@ -95,7 +96,12 @@ class UniCycleBasicEnv(gym.Env):
         delta = current - self.prev_coverage
         self.prev_coverage = current
 
-        return delta - self.time_penalty
+        reward = delta - self.time_penalty
+
+        if self._check_collision():
+            reward -= self.collision_penalty
+
+        return reward
 
 
     def _check_collision(self) -> bool:
