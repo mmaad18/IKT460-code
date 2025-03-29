@@ -1,7 +1,8 @@
-import math
+import numpy as np
 import pygame
 from pygame.color import Color
 
+from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.ObstacleDTO import ObstacleDTO
 from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 from unicycle_env.envs.AgentDTO import AgentDTO
@@ -21,8 +22,9 @@ class LidarEnvironment:
         self.dynamic_obstacles: list[ObstacleDTO] = []
 
 
-    def update(self, agent: AgentDTO, lidar_data: list[MeasurementDTO]):
+    def update(self, agent: AgentDTO, coverage_grid: CoverageGridDTO, lidar_data: list[MeasurementDTO]):
         self.surface.blit(self.surface_load, (0, 0))
+        self.draw_coverage_grid(coverage_grid)
         self.move_obstacles()
         self.draw_obstacles()
         self.draw_lidar_data(lidar_data)
@@ -47,6 +49,19 @@ class LidarEnvironment:
                 return obstacle.color
 
         return self.surface.get_at((int(x), int(y)))
+
+
+    """
+    COVERAGE GRID
+    """
+    def draw_coverage_grid(self, coverage_grid: CoverageGridDTO):
+        grid = coverage_grid.grid
+        res = coverage_grid.resolution
+        color = coverage_grid.color
+
+        for x, y in np.argwhere(grid):
+            rect = pygame.Rect(x * res, y * res, res, res)
+            pygame.draw.rect(self.surface, color, rect)
 
 
     """

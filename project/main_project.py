@@ -3,18 +3,15 @@ import gymnasium
 import unicycle_env
 import numpy as np
 
-env = gymnasium.make('unicycle_env/UniCycleBasicEnv-v0')
+from stable_baselines3 import PPO
 
-observation, info = env.reset()
+env = gymnasium.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")
+model = PPO.load("ppo_unicycle")
+
+obs, info = env.reset()
 for _ in range(10000):
-    # this is where you would insert your policy
-    action = np.array([0.0, 0.5], dtype=np.float32)
-
-    # step (transition) through the environment with the action
-    # receiving the next observation, reward and if the episode has terminated or truncated
-    observation, reward, terminated, truncated, info = env.step(action)
-
-    # If the episode has ended then we can reset to start a new episode
+    action, _ = model.predict(obs)
+    obs, reward, terminated, truncated, info = env.step(action)
     if terminated or truncated:
-        observation, info = env.reset()
+        obs, info = env.reset()
 

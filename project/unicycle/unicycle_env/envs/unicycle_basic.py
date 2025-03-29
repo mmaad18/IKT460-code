@@ -8,6 +8,7 @@ import numpy as np
 from gymnasium.core import RenderFrame, ActType, ObsType
 
 from unicycle_env.envs.AgentDTO import AgentDTO
+from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.Lidar import Lidar
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 from unicycle_env.envs.MeasurementDTO import MeasurementDTO
@@ -32,8 +33,14 @@ class UniCycleBasicEnv(gym.Env):
         # Angle + distance per LIDAR ray
         self.observation_space = spaces.Box(low=0.0, high=(500.0+100.0), shape=(120,), dtype=np.float32)
 
+        self.time_step = 0
+        self.grid_resolution = 10
+        self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
+
 
     def step(self, action: np.ndarray):
+        self.time_step += 1
+
         # Apply unicycle kinematics
         self._apply_action(action)
 
@@ -42,8 +49,10 @@ class UniCycleBasicEnv(gym.Env):
         obs_2d = np.array([[m.distance, m.angle] for m in measurements], dtype=np.float32)
         obs_flat = obs_2d.flatten()
 
-        reward = self._calculate_reward(obs_flat)
-        terminated = self._is_terminated(obs_flat)
+        # Reward
+        self.coverage_grid.visited(self.agent.position)
+        reward = self._calculate_reward()
+        terminated = self._is_terminated()
         info = {}
 
         if self.render_mode == "human":
@@ -55,8 +64,10 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
+        self.time_step = 0
         self.agent.position = (500.0, 500.0)
         self.agent.angle = 0.0
+        self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
 
         return self._get_observation(), {}
 
@@ -81,18 +92,17 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.angle = new_theta % (2 * np.pi)
 
 
-    def _calculate_reward(self, observation):
-        # Define a reward function based on the observation
-        return -np.mean(observation)  # Try to keep closer to obstacles = explore
+    def _calculate_reward(self):
+        return self.coverage_grid.coverage() - self.time_step
 
 
-    def _is_terminated(self, observation):
+    def _is_terminated(self):
         # Define a condition to end the episode
         return False
 
 
     def _render_frame(self, lidar_data: list[MeasurementDTO]):
-        self.environment.update(self.agent, lidar_data)
+        self.environment.update(self.agent, self.coverage_grid, lidar_data)
 
         if self.window is None:
             pygame.init()

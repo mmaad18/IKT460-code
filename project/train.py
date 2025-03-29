@@ -13,7 +13,7 @@ env = make_vec_env("unicycle_env/UniCycleBasicEnv-v0", n_envs=4)  # or n_envs=1 
 model = PPO("MlpPolicy", env, verbose=1)
 
 # Train
-model.learn(total_timesteps=200_000)
+model.learn(total_timesteps=200)
 
 # Save model
 model.save("ppo_unicycle")
