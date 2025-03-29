@@ -6,6 +6,7 @@ import numpy as np
 class MeasurementDTO:
     distance: float
     angle: float
+    hit: float
     position: tuple[float, float]
 
     def to_cartesian(self) -> tuple[float, float]:
@@ -18,5 +19,5 @@ class MeasurementDTO:
         noisy_distance = max(0.0, np.random.normal(self.distance, sigma_distance))
         noisy_angle = np.random.normal(self.angle, sigma_angle)
 
-        return MeasurementDTO(noisy_distance, noisy_angle, self.position)
+        return MeasurementDTO(noisy_distance, noisy_angle, self.hit, self.position)
 

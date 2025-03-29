@@ -27,6 +27,7 @@ class Lidar:
         for angle in np.linspace(0, 2 * np.pi, self.num_rays, False):
             cos_a = math.cos(angle)
             sin_a = math.sin(angle)
+            hit = 0.0
 
             for distance in range(0, self.max_distance, step):
                 x2 = round(x1 + distance * cos_a)
@@ -35,10 +36,15 @@ class Lidar:
                 if 0 <= x2 < self.width and 0 <= y2 < self.height:
                     color = self.environment.get_at((x2, y2))
                     if color == Color("black"):
-                        clean_measurement = MeasurementDTO(distance, angle, position)
+                        hit = 1.0
+                        clean_measurement = MeasurementDTO(distance, angle, hit, position)
                         noisy_measurement = clean_measurement.with_uncertainty(self.sigma[0], self.sigma[1])
                         measurements.append(noisy_measurement)
                         break
+
+            if hit == 0.0:
+                max_measurement = MeasurementDTO(self.max_distance, angle, hit, position)
+                measurements.append(max_measurement)
 
         return measurements
 

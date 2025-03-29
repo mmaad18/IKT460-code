@@ -25,34 +25,33 @@ class UniCycleBasicEnv(gym.Env):
         self.map_dimensions = (1200, 600)
 
         self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
-        self.lidar = Lidar(self.environment, max_distance=500, num_rays=60, uncertainty=(0.5, 0.01))
+        self.lidar = Lidar(self.environment, max_distance=200, num_rays=60, uncertainty=(0.5, 0.01))
 
         self.agent = AgentDTO(position=(500.0, 500.0), angle=0.0, size=(20, 10), color=Color("green"))
 
         self.action_space = spaces.Box(low=np.array([-1.0, -1.0]), high=np.array([1.0, 1.0]), shape=(2,), dtype=np.float32)
-        # Angle + distance per LIDAR ray
-        self.observation_space = spaces.Box(low=0.0, high=(500.0+100.0), shape=(120,), dtype=np.float32)
+        # Angle + distance + hit per LIDAR ray
+        self.observation_space = spaces.Box(low=0.0, high=(500.0+100.0), shape=(180,), dtype=np.float32)
 
-        self.time_step = 0
+        self.time_penalty = 0.01
         self.grid_resolution = 10
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
+        self.prev_coverage = 0
 
 
     def step(self, action: np.ndarray):
-        self.time_step += 1
-
         # Apply unicycle kinematics
         self._apply_action(action)
 
         # LIDAR observation
         measurements = self.lidar.measurement(self.agent.position)
-        obs_2d = np.array([[m.distance, m.angle] for m in measurements], dtype=np.float32)
+        obs_2d = np.array([[m.distance, m.angle, m.hit] for m in measurements], dtype=np.float32)
         obs_flat = obs_2d.flatten()
 
         # Reward
         self.coverage_grid.visited(self.agent.position)
         reward = self._calculate_reward()
-        terminated = self._is_terminated()
+        terminated = self._check_collision()
         info = {}
 
         if self.render_mode == "human":
@@ -64,7 +63,6 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.time_step = 0
         self.agent.position = (500.0, 500.0)
         self.agent.angle = 0.0
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
@@ -74,7 +72,7 @@ class UniCycleBasicEnv(gym.Env):
 
     def _get_observation(self):
         measurements = self.lidar.measurement(self.agent.position)
-        obs_2d = np.array([[m.distance, m.angle] for m in measurements], dtype=np.float32)
+        obs_2d = np.array([[m.distance, m.angle, m.hit] for m in measurements], dtype=np.float32)
         return obs_2d.flatten()
 
 
@@ -92,12 +90,19 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.angle = new_theta % (2 * np.pi)
 
 
-    def _calculate_reward(self):
-        return self.coverage_grid.coverage() - self.time_step
+    def _calculate_reward(self) -> float:
+        current = self.coverage_grid.coverage()
+        delta = current - self.prev_coverage
+        self.prev_coverage = current
+
+        return delta - self.time_penalty
 
 
-    def _is_terminated(self):
-        # Define a condition to end the episode
+    def _check_collision(self) -> bool:
+        for px, py in self.agent.get_polygon():
+            if self.environment.get_at((px, py)) == Color("black"):
+                return True
+
         return False
 
 

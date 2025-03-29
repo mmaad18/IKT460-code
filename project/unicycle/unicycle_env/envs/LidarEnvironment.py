@@ -67,12 +67,13 @@ class LidarEnvironment:
     """
     AGENT
     """
-    def draw_lidar_data(self, lidar_data: list[MeasurementDTO], point_radius: float = 2.0):
+    def draw_lidar_data(self, lidar_data: list[MeasurementDTO], point_radius: int = 2):
         self.lidar_surface = self.surface.copy()
 
         for m in lidar_data:
             x, y = m.to_cartesian()
-            pygame.draw.circle(self.lidar_surface, Color("red"), (round(x), round(y)), point_radius)
+            color = Color("red") if m.hit == 1.0 else Color("lightpink")
+            pygame.draw.circle(self.lidar_surface, color, (round(x), round(y)), int(point_radius))
 
         self.surface.blit(self.lidar_surface, (0, 0))
 
