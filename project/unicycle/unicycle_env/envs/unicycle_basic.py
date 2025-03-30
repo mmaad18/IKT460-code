@@ -21,18 +21,25 @@ class UniCycleBasicEnv(gym.Env):
         self.render_mode = render_mode
         self.clock = None
         self.window = None
+
+        # Map setup
         self.map_path = "project/unicycle/unicycle_env/envs/SLAM_MAP_1H.png"
         self.map_dimensions = (1200, 600)
-
         self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
-        self.lidar = Lidar(self.environment, max_distance=200, num_rays=60, uncertainty=(0.5, 0.01))
 
-        self.agent = AgentDTO(position=(500.0, 500.0), angle=0.0, size=(20, 10), color=Color("green"))
+        # Agent setup
+        self.start_position = (500.0, 500.0)
+        self.start_angle = 0.0
+        self.num_rays = 60
+        self.max_distance = 200
+        self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=(0.5, 0.01))
+        self.agent = AgentDTO(position=self.start_position, angle=self.start_angle, size=(20, 10), color=Color("green"))
 
+        # Action and observation space
         self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([50.0, 5.0]), shape=(2,), dtype=np.float32)
-        # Angle + distance + hit per LIDAR ray
-        self.observation_space = spaces.Box(low=0.0, high=(500.0+100.0), shape=(180,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 3,), dtype=np.float32)
 
+        # Reward
         self.time_penalty = 0.01
         self.grid_resolution = 5
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
@@ -60,13 +67,6 @@ class UniCycleBasicEnv(gym.Env):
 
         # Logging
         if True:
-            print(f"  Distance 1: {measurements[0].distance},  Angle 1: {np.degrees(measurements[0].angle):.1f}°")
-            print(f"  Distance 2: {measurements[1].distance},  Angle 2: {np.degrees(measurements[1].angle):.1f}°")
-            print(f"  Distance 3: {measurements[2].distance},  Angle 3: {np.degrees(measurements[2].angle):.1f}°")
-            print(f"  Global Position: {self.agent.position},  Global Angle: {np.degrees(self.agent.angle):.1f}°")
-            print(f"==============================================================================")
-
-        if False:
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
             print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
@@ -77,8 +77,8 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.agent.position = (500.0, 500.0)
-        self.agent.angle = 0.0
+        self.agent.position = self.start_position
+        self.agent.angle = self.start_angle
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
 
         return self._get_observation(), {}
@@ -103,7 +103,7 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.position = (new_x, new_y)
         self.agent.angle = new_theta % (2 * np.pi)
 
-        if False:
+        if True:
             print(f"  Action: v={v:.2f}, omega={omega:.2f}")
 
 

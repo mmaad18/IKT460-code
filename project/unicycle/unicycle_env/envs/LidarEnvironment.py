@@ -37,18 +37,7 @@ class LidarEnvironment:
 
 
     def get_at(self, position: tuple[int, int]) -> Color:
-        """ Returns pixel color at a given position (checks obstacles first) """
-        x, y = position
-
-        for obstacle in self.dynamic_obstacles:
-            xo, yo = obstacle.position
-            w, h = obstacle.size
-
-            # Inside obstacle
-            if xo <= x <= xo + w and yo <= y <= yo + h:
-                return obstacle.color
-
-        return self.surface.get_at((int(x), int(y)))
+        return self.surface.get_at(position)
 
 
     """
@@ -71,9 +60,8 @@ class LidarEnvironment:
         self.lidar_surface = self.surface.copy()
 
         for m in lidar_data:
-            x, y = m.to_cartesian()
             color = Color("red") if m.hit == 1.0 else Color("lightpink")
-            pygame.draw.circle(self.lidar_surface, color, (round(x), round(y)), int(point_radius))
+            pygame.draw.circle(self.lidar_surface, color, m.position, int(point_radius))
 
         self.surface.blit(self.lidar_surface, (0, 0))
 
