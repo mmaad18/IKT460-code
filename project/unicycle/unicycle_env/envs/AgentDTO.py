@@ -13,11 +13,9 @@ class AgentDTO:
     def get_polygon(self) -> list[tuple[int, int]]:
         x, y = self.position
         length, width = self.size
-        cos_a = math.cos(self.angle)
-        sin_a = math.sin(self.angle)
         pi_2 = math.pi / 2.0
 
-        tip = (x + length * cos_a, y - length * sin_a)
+        tip = (x + length * math.cos(self.angle), y - length * math.sin(self.angle))
 
         base_left = (
             x + width * 0.5 * math.cos(self.angle + pi_2),

@@ -60,6 +60,13 @@ class UniCycleBasicEnv(gym.Env):
 
         # Logging
         if True:
+            print(f"  Distance 1: {measurements[0].distance},  Angle 1: {np.degrees(measurements[0].angle):.1f}°")
+            print(f"  Distance 2: {measurements[1].distance},  Angle 2: {np.degrees(measurements[1].angle):.1f}°")
+            print(f"  Distance 3: {measurements[2].distance},  Angle 3: {np.degrees(measurements[2].angle):.1f}°")
+            print(f"  Global Position: {self.agent.position},  Global Angle: {np.degrees(self.agent.angle):.1f}°")
+            print(f"==============================================================================")
+
+        if False:
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
             print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
@@ -96,7 +103,7 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.position = (new_x, new_y)
         self.agent.angle = new_theta % (2 * np.pi)
 
-        if True:
+        if False:
             print(f"  Action: v={v:.2f}, omega={omega:.2f}")
 
 
