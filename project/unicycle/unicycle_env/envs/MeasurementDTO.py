@@ -1,17 +1,20 @@
 from dataclasses import dataclass
 import numpy as np
 
+from unicycle_env.envs.AgentDTO import AgentDTO
+
 
 @dataclass
 class MeasurementDTO:
     distance: float
     angle: float
     hit: float
-    position: tuple[float, float]
+    agent: AgentDTO
 
     def to_cartesian(self) -> tuple[float, float]:
-        x = self.position[0] + self.distance * np.cos(self.angle)
-        y = self.position[1] - self.distance * np.sin(self.angle)
+        global_angle = (self.agent.angle + self.angle) % (2 * np.pi)
+        x = self.agent.position[0] + self.distance * np.cos(global_angle)
+        y = self.agent.position[1] - self.distance * np.sin(global_angle)
         return x, y
 
 
@@ -19,5 +22,5 @@ class MeasurementDTO:
         noisy_distance = max(0.0, np.random.normal(self.distance, sigma_distance))
         noisy_angle = np.random.normal(self.angle, sigma_angle)
 
-        return MeasurementDTO(noisy_distance, noisy_angle, self.hit, self.position)
+        return MeasurementDTO(noisy_distance, noisy_angle, self.hit, self.agent)
 
