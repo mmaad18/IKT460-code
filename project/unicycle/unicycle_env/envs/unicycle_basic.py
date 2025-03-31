@@ -23,12 +23,12 @@ class UniCycleBasicEnv(gym.Env):
         self.window = None
 
         # Map setup
-        self.map_path = "project/unicycle/unicycle_env/envs/SLAM_MAP_1H.png"
+        self.map_path = "project/unicycle/unicycle_env/envs/generated_map_1.png"
         self.map_dimensions = (1200, 600)
         self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
 
         # Agent setup
-        self.start_position = (500.0, 500.0)
+        self.start_position = (100.0, 200.0)
         self.start_angle = 0.0
         self.num_rays = 60
         self.max_distance = 200
@@ -40,11 +40,11 @@ class UniCycleBasicEnv(gym.Env):
         self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 3,), dtype=np.float32)
 
         # Reward
-        self.time_penalty = 0.01
+        self.time_penalty = 0.02
         self.grid_resolution = 5
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         self.prev_coverage = 0
-        self.collision_penalty = 10.0
+        self.collision_penalty = 20.0
 
 
     def step(self, action: np.ndarray):
@@ -66,7 +66,7 @@ class UniCycleBasicEnv(gym.Env):
             self._render_frame(measurements)
 
         # Logging
-        if True:
+        if False:
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
             print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
@@ -103,7 +103,7 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.position = (new_x, new_y)
         self.agent.angle = new_theta % (2 * np.pi)
 
-        if True:
+        if False:
             print(f"  Action: v={v:.2f}, omega={omega:.2f}")
 
 

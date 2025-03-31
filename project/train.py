@@ -7,13 +7,13 @@ import unicycle_env  # makes sure env is registered
 
 
 # Create vectorized env (for faster PPO training)
-env = make_vec_env("unicycle_env/UniCycleBasicEnv-v0", n_envs=1, seed=42)
+env = make_vec_env("unicycle_env/UniCycleBasicEnv-v0", n_envs=4, seed=42)
 
 # Define and train PPO model
 model = PPO("MlpPolicy", env, verbose=1, device="cuda")
 
 # Train
-model.learn(total_timesteps=100_000)
+model.learn(total_timesteps=500_000)
 
 # Save model
 model.save("ppo_unicycle")
