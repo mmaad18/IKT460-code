@@ -40,11 +40,11 @@ class UniCycleBasicEnv(gym.Env):
         self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 3,), dtype=np.float32)
 
         # Reward
-        self.time_penalty = 0.02
+        self.time_penalty = 0.01
         self.grid_resolution = 5
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         self.prev_coverage = 0
-        self.collision_penalty = 20.0
+        self.collision_penalty = 10.0
 
 
     def step(self, action: np.ndarray):
@@ -66,7 +66,7 @@ class UniCycleBasicEnv(gym.Env):
             self._render_frame(measurements)
 
         # Logging
-        if False:
+        if True:
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
             print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
@@ -103,7 +103,7 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.position = (new_x, new_y)
         self.agent.angle = new_theta % (2 * np.pi)
 
-        if False:
+        if True:
             print(f"  Action: v={v:.2f}, omega={omega:.2f}")
 
 
@@ -112,7 +112,7 @@ class UniCycleBasicEnv(gym.Env):
         delta = current - self.prev_coverage
         self.prev_coverage = current
 
-        reward = delta - self.time_penalty - (10 / (1 + abs(velocity))**1.5)
+        reward = 10 * delta - self.time_penalty - (1 / (1 + velocity)**2)
 
         if self._check_collision():
             reward -= self.collision_penalty
