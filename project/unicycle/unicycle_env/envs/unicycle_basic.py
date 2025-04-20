@@ -1,14 +1,12 @@
-from typing import SupportsFloat, Any
+import random
 
 import gymnasium as gym
-from gymnasium import spaces
-import pygame
-from pygame.color import Color
 import numpy as np
-import random
-from gymnasium.core import RenderFrame, ActType, ObsType
+import pygame
+from gymnasium import spaces
+from pygame.color import Color
 
-from unicycle_env.envs.AgentDTO import AgentDTO
+from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.Lidar import Lidar
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment
@@ -36,23 +34,30 @@ class UniCycleBasicEnv(gym.Env):
         self.num_rays = 60
         self.max_distance = 200
         self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=(0.5, 0.01))
-        self.agent = AgentDTO(position=self.start_position, angle=self.start_angle, size=(20, 10), color=Color("green"))
+        self.agent = Agent(position=self.start_position, angle=self.start_angle, size=(20, 10), color=Color("green"))
 
         # Action and observation space
         self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([50.0, 5.0]), shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2 + 3,), dtype=np.float32)
 
-        # Reward
-        self.time_penalty = 0.01
+        # Coverage grid
         self.grid_resolution = 5
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         self.prev_coverage = 0
-        self.collision_penalty = 100.0
+
+        # Rewards
+        self.time_penalty = -0.02
+        self.omega_penalty = -0.2
+        self.collision_penalty = -100.0
+
+        self.v_reward = 0.2
+        self.coverage_reward = 100.0
 
 
     def step(self, action: np.ndarray):
         # Apply unicycle kinematics
-        self._apply_action(action)
+        dt = 1.0 / self.metadata["render_fps"]
+        self.agent.apply_action(action, dt)
 
         # LIDAR observation
         measurements = self.lidar.measurement(self.agent)
@@ -69,7 +74,8 @@ class UniCycleBasicEnv(gym.Env):
             self._render_frame(measurements)
 
         # Logging
-        if False:
+        if True:
+            print(f"  Action: v={float(action[0]):.2f}, omega={float(action[1]):.2f}")
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
             print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
@@ -93,32 +99,16 @@ class UniCycleBasicEnv(gym.Env):
         return obs_2d.flatten()
 
 
-    def _apply_action(self, action: np.ndarray):
-        v, omega = float(action[0]), float(action[1])
-        x, y = self.agent.position
-        theta = self.agent.angle
-        dt = 1.0 / self.metadata["render_fps"]
-
-        new_x = x + v * np.cos(theta) * dt
-        new_y = y - v * np.sin(theta) * dt  # Minus because pygame y-axis goes down
-        new_theta = theta + omega * dt
-
-        self.agent.position = (new_x, new_y)
-        self.agent.angle = new_theta % (2 * np.pi)
-
-        if False:
-            print(f"  Action: v={v:.2f}, omega={omega:.2f}")
-
-
     def _calculate_reward(self, action: np.ndarray) -> float:
         current = self.coverage_grid.coverage()
         delta = current - self.prev_coverage
         self.prev_coverage = current
 
-        reward = 100.0 * delta - self.time_penalty + 0.2 * action[0] - 0.2 * abs(action[1])
+        v, omega = float(action[0]), float(action[1])
+        reward = self.time_penalty + self.coverage_reward * delta + self.v_reward * v + self.omega_penalty * abs(omega)
 
         if self._check_collision():
-            reward -= self.collision_penalty
+            reward += self.collision_penalty
 
         return reward
 

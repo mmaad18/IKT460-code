@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from pygame.color import Color
+
 import numpy as np
+from pygame.color import Color
 
 
 @dataclass

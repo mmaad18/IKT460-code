@@ -77,7 +77,7 @@ def save_surface():
     pygame.quit()
 
 
-draw_grid()
+#draw_grid()
 draw_walls()
 save_surface()
 

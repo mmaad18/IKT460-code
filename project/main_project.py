@@ -1,8 +1,5 @@
 import gymnasium
 
-import unicycle_env
-import numpy as np
-
 from stable_baselines3 import PPO
 
 env = gymnasium.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")

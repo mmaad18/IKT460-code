@@ -1,7 +1,6 @@
 import numpy as np
 from udemy.environments.Action import Action
 from udemy.environments.CellType import CellType
-from udemy.environments.BaseCell import BaseCell
 from udemy.environments.GridCell import GridCell
 
 
@@ -10,6 +9,7 @@ class GridWorld:
         self.shape = shape
         self.position = start
         self.grid = np.ones(shape, dtype=object)
+        self.rewards = 0
 
         for i, j in np.ndindex(shape):
             self.grid[i, j] = GridCell(CellType.PATH, np.zeros(4), np.eye(4))

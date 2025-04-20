@@ -1,6 +1,6 @@
-import pygame
 import numpy as np
-import gymnasium as gym
+import pygame
+
 from unicycle_env.envs.unicycle_basic import UniCycleBasicEnv
 
 env = UniCycleBasicEnv(render_mode="human")
@@ -36,6 +36,9 @@ while running:
 
     if keys[pygame.K_SPACE]:
         obs, info = env.reset()
+
+    if keys[pygame.K_ESCAPE]:
+        running = False
 
     action = np.array([v, omega], dtype=np.float32)
     obs, reward, terminated, truncated, info = env.step(action)

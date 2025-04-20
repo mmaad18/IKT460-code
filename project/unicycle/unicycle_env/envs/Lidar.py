@@ -1,9 +1,9 @@
 import math
+
 import numpy as np
-import pygame
 from pygame.color import Color
 
-from unicycle_env.envs.AgentDTO import AgentDTO
+from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 
@@ -19,7 +19,7 @@ class Lidar:
 
     def measurement(
             self,
-            agent: AgentDTO,
+            agent: Agent,
             step: int = 2
     ) -> list[MeasurementDTO]:
         measurements = []

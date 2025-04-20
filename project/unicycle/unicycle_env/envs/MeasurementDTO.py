@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+
 import numpy as np
 
-from unicycle_env.envs.AgentDTO import AgentDTO
+from unicycle_env.envs.Agent import Agent
 
 
 @dataclass
@@ -10,7 +11,7 @@ class MeasurementDTO:
     angle: float
     hit: float
     position: tuple[int, int]
-    agent: AgentDTO
+    agent: Agent
 
     def with_uncertainty(self, sigma_distance: float, sigma_angle: float) -> "MeasurementDTO":
         noisy_distance = max(0.0, np.random.normal(self.distance, sigma_distance))

@@ -2,10 +2,10 @@ import numpy as np
 import pygame
 from pygame.color import Color
 
+from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
-from unicycle_env.envs.ObstacleDTO import ObstacleDTO
 from unicycle_env.envs.MeasurementDTO import MeasurementDTO
-from unicycle_env.envs.AgentDTO import AgentDTO
+from unicycle_env.envs.ObstacleDTO import ObstacleDTO
 
 
 class LidarEnvironment:
@@ -22,7 +22,7 @@ class LidarEnvironment:
         self.dynamic_obstacles: list[ObstacleDTO] = []
 
 
-    def update(self, agent: AgentDTO, coverage_grid: CoverageGridDTO, lidar_data: list[MeasurementDTO]):
+    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, lidar_data: list[MeasurementDTO]):
         self.surface.blit(self.surface_load, (0, 0))
         self.draw_coverage_grid(coverage_grid)
         self.move_obstacles()
@@ -66,7 +66,7 @@ class LidarEnvironment:
         self.surface.blit(self.lidar_surface, (0, 0))
 
 
-    def draw_agent(self, agent: AgentDTO):
+    def draw_agent(self, agent: Agent):
         polygon = agent.get_polygon()
         pygame.draw.polygon(self.surface, agent.color, polygon)
 
