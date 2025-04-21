@@ -1,4 +1,5 @@
 import gymnasium
+import unicycle_env
 
 from stable_baselines3 import PPO
 

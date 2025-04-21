@@ -35,6 +35,7 @@ class UniCycleBasicEnv(gym.Env):
         self.max_distance = 200
         self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=(0.5, 0.01))
         self.agent = Agent(position=self.start_position, angle=self.start_angle, size=(20, 10), color=Color("green"))
+        self.dt = 1.0 / self.metadata["render_fps"]
 
         # Action and observation space
         self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([50.0, 5.0]), shape=(2,), dtype=np.float32)
@@ -56,13 +57,11 @@ class UniCycleBasicEnv(gym.Env):
 
     def step(self, action: np.ndarray):
         # Apply unicycle kinematics
-        dt = 1.0 / self.metadata["render_fps"]
-        self.agent.apply_action(action, dt)
+        self.agent.apply_action(action, self.dt)
 
         # LIDAR observation
         measurements = self.lidar.measurement(self.agent)
-        obs_2d = np.array([[m.distance, m.hit] for m in measurements], dtype=np.float32)
-        obs_flat = obs_2d.flatten()
+        obs_flat = self._get_observation()
 
         # Reward
         self.coverage_grid.visited(self.agent.position)
@@ -93,10 +92,12 @@ class UniCycleBasicEnv(gym.Env):
         return self._get_observation(), {}
 
 
-    def _get_observation(self):
+    def _get_observation(self) -> np.ndarray:
         measurements = self.lidar.measurement(self.agent)
-        obs_2d = np.array([[m.distance, m.hit] for m in measurements], dtype=np.float32)
-        return obs_2d.flatten()
+        obs_2d_normalized = np.array([[min(m.distance, self.max_distance) / self.max_distance, m.hit] for m in measurements], dtype=np.float32)
+        pose = self.agent.get_pose_noisy(sigma_position=0.5, sigma_angle=0.01)
+        pose_normalized = np.array([pose[0] / self.map_dimensions[0], pose[1] / self.map_dimensions[1], pose[2] / (2 * np.pi)], dtype=np.float32)
+        return np.concatenate((obs_2d_normalized.flatten(), pose_normalized), axis=0)
 
 
     def _calculate_reward(self, action: np.ndarray) -> float:
