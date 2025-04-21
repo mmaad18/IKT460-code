@@ -73,7 +73,7 @@ class UniCycleBasicEnv(gym.Env):
             self._render_frame(measurements)
 
         # Logging
-        if True:
+        if False:
             print(f"  Action: v={float(action[0]):.2f}, omega={float(action[1]):.2f}")
             print(f"  Pos: {self.agent.position}")
             print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")

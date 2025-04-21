@@ -14,7 +14,7 @@ class Lidar:
         self.max_distance = max_distance
         self.num_rays = num_rays
         self.width, self.height = environment.get_size()
-        self.sigma = uncertainty
+        self.sigma_distance, self.sigma_angle = uncertainty
 
 
     def measurement(
@@ -39,15 +39,15 @@ class Lidar:
                     color = self.environment.get_at((x2, y2))
                     if color == Color("black"):
                         hit = 1.0
-                        clean_measurement = MeasurementDTO(distance, relative_angle, hit, (x2, y2), agent)
-                        noisy_measurement = clean_measurement.with_uncertainty(self.sigma[0], self.sigma[1])
+                        clean_measurement = MeasurementDTO(distance, relative_angle, hit, (x2, y2))
+                        noisy_measurement = clean_measurement.with_uncertainty(self.sigma_distance, self.sigma_angle)
                         measurements.append(noisy_measurement)
                         break
 
             if hit == 0.0:
                 x2 = int(x1 + self.max_distance * cos_a)
                 y2 = int(y1 - self.max_distance * sin_a)
-                max_measurement = MeasurementDTO(self.max_distance, relative_angle, hit, (x2, y2), agent)
+                max_measurement = MeasurementDTO(self.max_distance, relative_angle, hit, (x2, y2))
                 measurements.append(max_measurement)
 
         return measurements
