@@ -10,7 +10,6 @@ from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.Lidar import Lidar
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment
-from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
@@ -51,7 +50,7 @@ class UniCycleBasicEnv(gym.Env):
         self.omega_penalty = -0.2
         self.collision_penalty = -100.0
 
-        self.v_reward = 0.2
+        self.v_reward = 0.5
         self.coverage_reward = 100.0
 
 
@@ -61,7 +60,7 @@ class UniCycleBasicEnv(gym.Env):
 
         # LIDAR observation
         measurements = self.lidar.measurement(self.agent)
-        obs_flat = self._get_observation()
+        obs_flat = self._get_observation(measurements)
 
         # Reward
         self.coverage_grid.visited(self.agent.position)
@@ -88,16 +87,27 @@ class UniCycleBasicEnv(gym.Env):
         self.agent.position = self.start_position_manager.next()
         self.agent.angle = random.uniform(0, 2 * np.pi)
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
-
-        return self._get_observation(), {}
-
-
-    def _get_observation(self) -> np.ndarray:
         measurements = self.lidar.measurement(self.agent)
-        obs_2d_normalized = np.array([[min(m.distance, self.max_distance) / self.max_distance, m.hit] for m in measurements], dtype=np.float32)
-        pose = self.agent.get_pose_noisy(sigma_position=0.5, sigma_angle=0.01)
-        pose_normalized = np.array([pose[0] / self.map_dimensions[0], pose[1] / self.map_dimensions[1], pose[2] / (2 * np.pi)], dtype=np.float32)
-        return np.concatenate((obs_2d_normalized.flatten(), pose_normalized), axis=0)
+
+        return self._get_observation(measurements), {}
+
+
+    def _get_observation(self, measurements: np.ndarray) -> np.ndarray:
+        # measurements shape: (num_rays, 5) → [distance, angle, hit, x, y]
+        distances = np.clip(measurements[:, 0], 0, self.max_distance) / self.max_distance
+        hits = measurements[:, 2]  # assuming hit is the third column
+        obs_2d_normalized = np.stack((distances, hits), axis=1)
+
+        # Normalize pose
+        x, y, angle = self.agent.get_pose_noisy(sigma_position=0.5, sigma_angle=0.01)
+        width, height = self.map_dimensions
+        pose_normalized = np.array([
+            x / width,
+            y / height,
+            angle % (2 * np.pi) / (2 * np.pi)
+        ], dtype=np.float32)
+
+        return np.concatenate((obs_2d_normalized.ravel(), pose_normalized), axis=0)
 
 
     def _calculate_reward(self, action: np.ndarray) -> float:
@@ -116,14 +126,14 @@ class UniCycleBasicEnv(gym.Env):
 
     def _check_collision(self) -> bool:
         for px, py in self.agent.get_polygon():
-            if self.environment.get_at((px, py)) == Color("black"):
+            if self.environment.get_at((px, py)):
                 return True
 
         return False
 
 
-    def _render_frame(self, lidar_data: list[MeasurementDTO]):
-        self.environment.update(self.agent, self.coverage_grid, lidar_data)
+    def _render_frame(self, measurements: np.ndarray):
+        self.environment.update(self.agent, self.coverage_grid, measurements)
 
         if self.window is None:
             pygame.init()
