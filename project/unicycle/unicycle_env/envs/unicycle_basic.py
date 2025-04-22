@@ -50,7 +50,7 @@ class UniCycleBasicEnv(gym.Env):
         self.omega_penalty = -0.2
         self.collision_penalty = -100.0
 
-        self.v_reward = 0.5
+        self.v_reward = 0.75
         self.coverage_reward = 100.0
 
 
