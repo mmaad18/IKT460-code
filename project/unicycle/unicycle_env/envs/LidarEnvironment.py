@@ -1,10 +1,10 @@
 import numpy as np
 import pygame
 from pygame.color import Color
+from skimage.io import imread
 
 from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
-from unicycle_env.envs.MeasurementDTO import MeasurementDTO
 from unicycle_env.envs.ObstacleDTO import ObstacleDTO
 
 
@@ -21,13 +21,17 @@ class LidarEnvironment:
         self.lidar_surface = self.surface.copy()
         self.dynamic_obstacles: list[ObstacleDTO] = []
 
+        image_array = imread(map_image_path)
+        bw_image = np.dot(image_array[..., :3], np.array([1/3, 1/3, 1/3]))
+        self.walls = (bw_image < 128).T
 
-    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, lidar_data: list[MeasurementDTO]):
+
+    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, measurements: np.ndarray):
         self.surface.blit(self.surface_load, (0, 0))
         self.draw_coverage_grid(coverage_grid)
         self.move_obstacles()
         self.draw_obstacles()
-        self.draw_lidar_data(lidar_data)
+        self.draw_lidar_data(measurements)
         self.draw_agent(agent)
         pygame.display.update()
 
@@ -36,8 +40,12 @@ class LidarEnvironment:
         return self.map_dimensions
 
 
-    def get_at(self, position: tuple[int, int]) -> Color:
-        return self.surface.get_at(position)
+    def get_at(self, position: tuple[int, int]) -> bool:
+        return self.walls[position]
+
+
+    def get_walls(self) -> np.ndarray:
+        return self.walls
 
 
     """
@@ -56,12 +64,13 @@ class LidarEnvironment:
     """
     AGENT
     """
-    def draw_lidar_data(self, lidar_data: list[MeasurementDTO], point_radius: int = 2):
+    def draw_lidar_data(self, measurements: np.ndarray, point_radius: int = 2):
         self.lidar_surface = self.surface.copy()
 
-        for m in lidar_data:
-            color = Color("red") if m.hit == 1.0 else Color("lightpink")
-            pygame.draw.circle(self.lidar_surface, color, m.position, int(point_radius))
+        for m in measurements:
+            color = Color("red") if m[2] == 1.0 else Color("lightpink")
+            position = (int(m[3]), int(m[4]))
+            pygame.draw.circle(self.lidar_surface, color, position, int(point_radius))
 
         self.surface.blit(self.lidar_surface, (0, 0))
 
