@@ -36,99 +36,66 @@ def draw_outer_box(surface: Surface, map_size=(1200, 600), wall_thickness=10, wa
 """
 ROOMS
 """
-def draw_room_1(surface: Surface, wall_thickness=10, wall_color=(0, 0, 0)):
-    room_1 = [
-        pygame.Rect(690, 200, 80, wall_thickness), # Bottom Left
-        pygame.Rect(830, 200, 80, wall_thickness), # Bottom Right
-        pygame.Rect(690, 40, wall_thickness, 170), # Left
-        pygame.Rect(900, 40, wall_thickness, 170), # Right
-    ]
+def draw_room(surface: Surface, origin: tuple[int, int], size: tuple[int, int], exits: str = "0000", door_width: int = 60, wall_thickness: int = 10, wall_color=(0, 0, 0)):
+    """
+    exits: A string of 4 characters (0 or 1) representing the exits: Top, Right, Bottom, Left.
+    """
+    x, y = origin
+    width, height = size
 
-    for wall in room_1:
-        pygame.draw.rect(surface, wall_color, wall)
+    if len(exits) != 4 or any(c not in "01" for c in exits):
+        raise ValueError("exits must be a 4-character string of 0 or 1")
 
+    top_exit, right_exit, bottom_exit, left_exit = exits
 
-def draw_room_2(surface: Surface, wall_thickness=10, wall_color=(0, 0, 0)):
-    room_2 = [
-        pygame.Rect(190, 390, 80, wall_thickness), # Top Left
-        pygame.Rect(330, 390, 80, wall_thickness), # Top Right
-        pygame.Rect(190, 390, wall_thickness, 170), # Left
-        pygame.Rect(400, 390, wall_thickness, 170), # Right
-    ]
+    walls = []
 
-    for wall in room_2:
-        pygame.draw.rect(surface, wall_color, wall)
+    # TOP wall
+    if top_exit == "0":
+        walls.append(pygame.Rect(x, y, width, wall_thickness))
+    else:
+        walls.append(pygame.Rect(x, y, (width - door_width) // 2, wall_thickness))
+        walls.append(pygame.Rect(x + (width + door_width) // 2, y, (width - door_width) // 2, wall_thickness))
 
+    # RIGHT wall
+    if right_exit == "0":
+        walls.append(pygame.Rect(x + width - wall_thickness, y, wall_thickness, height))
+    else:
+        walls.append(pygame.Rect(x + width - wall_thickness, y, wall_thickness, (height - door_width) // 2))
+        walls.append(pygame.Rect(x + width - wall_thickness, y + (height + door_width) // 2, wall_thickness, (height - door_width) // 2))
 
-def draw_room(surface: Surface, origin_x: int, origin_y: int, wall_thickness=10, wall_color=(0, 0, 0)):
-    walls = [
-        pygame.Rect(origin_x, origin_y + 160, 80, wall_thickness),  # Bottom Left door
-        pygame.Rect(origin_x + 140, origin_y + 160, 80, wall_thickness),  # Bottom Right door
-        pygame.Rect(origin_x, origin_y, wall_thickness, 170),  # Left wall
-        pygame.Rect(origin_x + 210, origin_y, wall_thickness, 170),  # Right wall
-    ]
+    # BOTTOM wall
+    if bottom_exit == "0":
+        walls.append(pygame.Rect(x, y + height - wall_thickness, width, wall_thickness))
+    else:
+        walls.append(pygame.Rect(x, y + height - wall_thickness, (width - door_width) // 2, wall_thickness))
+        walls.append(pygame.Rect(x + (width + door_width) // 2, y + height - wall_thickness, (width - door_width) // 2, wall_thickness))
+
+    # LEFT wall
+    if left_exit == "0":
+        walls.append(pygame.Rect(x, y, wall_thickness, height))
+    else:
+        walls.append(pygame.Rect(x, y, wall_thickness, (height - door_width) // 2))
+        walls.append(pygame.Rect(x, y + (height + door_width) // 2, wall_thickness, (height - door_width) // 2))
 
     for wall in walls:
-        pygame.draw.rect(surface, wall_color, wall)
-
-
-
-def draw_tunnel_1(surface: Surface, wall_thickness=10, wall_color=(0, 0, 0)):
-    tunnel_1 = [
-        pygame.Rect(590, 340, 420, wall_thickness), # Top
-        pygame.Rect(590, 450, 420, wall_thickness), # Bottom
-        pygame.Rect(590, 340, wall_thickness, 30), # Left Top
-        pygame.Rect(590, 430, wall_thickness, 30), # Left Bottom
-        pygame.Rect(1000, 340, wall_thickness, 30), # Right Top
-        pygame.Rect(1000, 430, wall_thickness, 30), # Right Bottom
-    ]
-
-    for wall in tunnel_1:
         pygame.draw.rect(surface, wall_color, wall)
 
 
 """
-WALLS
+MAPS
 """
-def draw_walls(surface: Surface, wall_thickness=10, wall_color=(0, 0, 0)):
-    walls = [
-        # Room 1
-        pygame.Rect(690, 200, 80, wall_thickness), # Bottom Left
-        pygame.Rect(830, 200, 80, wall_thickness), # Bottom Right
-        pygame.Rect(690, 40, wall_thickness, 170), # Left
-        pygame.Rect(900, 40, wall_thickness, 170), # Right
-
-        # Room 2
-        pygame.Rect(190, 390, 80, wall_thickness), # Top Left
-        pygame.Rect(330, 390, 80, wall_thickness), # Top Right
-        pygame.Rect(190, 390, wall_thickness, 170), # Left
-        pygame.Rect(400, 390, wall_thickness, 170), # Right
-
-        # Tunnel 1
-        pygame.Rect(590, 340, 420, wall_thickness), # Top
-        pygame.Rect(590, 450, 420, wall_thickness), # Bottom
-        pygame.Rect(590, 340, wall_thickness, 30), # Left Top
-        pygame.Rect(590, 430, wall_thickness, 30), # Left Bottom
-        pygame.Rect(1000, 340, wall_thickness, 30), # Right Top
-        pygame.Rect(1000, 430, wall_thickness, 30), # Right Bottom
-
-        # Tunnel 2
-        pygame.Rect(40, 140, 120, wall_thickness), # Top
-        pygame.Rect(40, 250, 120, wall_thickness), # Bottom
-        pygame.Rect(150, 140, wall_thickness, 30), # Right Top
-        pygame.Rect(150, 230, wall_thickness, 30), # Right Bottom
-    ]
-
-    for wall in walls:
-        pygame.draw.rect(surface, wall_color, wall)
+def draw_map_1(surface: Surface):
+    draw_room(surface, (40, 40), (200, 100), "0000")
+    draw_room(surface, (300, 400), (200, 100), "0110")
+    draw_room(surface, (500, 200), (100, 100), "1111")
+    draw_room(surface, (700, 300), (200, 100), "0110")
 
 
 def main():
     # Map setup
     map_size = (1200, 600)
     bg_color = (255, 255, 255)
-    wall_color = (0, 0, 0)
-    wall_thickness = 10
 
     pygame.init()
     surface = pygame.Surface(map_size)
@@ -139,9 +106,7 @@ def main():
 
     # Draw the walls
     draw_outer_box(surface)
-    draw_room(surface, 60, 40)
-    draw_tunnel_1(surface)
-    #draw_walls(surface)
+    draw_map_1(surface)
 
     # Save the surface to a file
     pygame.image.save(surface, "generated_map.png")
