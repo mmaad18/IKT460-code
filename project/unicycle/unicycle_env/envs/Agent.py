@@ -13,7 +13,7 @@ class Agent:
     color: Color
 
 
-    def apply_action(self, action: np.ndarray, dt: float):
+    def apply_action(self, action: np.ndarray, dt: float) -> None:
         v, omega = float(action[0]), float(action[1])
         x, y = self.position
         theta = self.angle

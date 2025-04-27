@@ -21,7 +21,7 @@ class StartPositionManager:
         return self.starting_positions[self.idx]
 
 
-    def _load_starting_positions(self):
+    def _load_starting_positions(self) -> None:
         image_array = imread(self.map_image_path)
         bw_image = np.dot(image_array[..., :3], np.array([1/3, 1/3, 1/3]))
         obstacle_map = bw_image < 128

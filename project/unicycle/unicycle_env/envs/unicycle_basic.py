@@ -10,7 +10,6 @@ from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.Lidar import Lidar
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment
-from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
 class UniCycleBasicEnv(gym.Env):
@@ -27,8 +26,7 @@ class UniCycleBasicEnv(gym.Env):
         self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
 
         # Agent setup
-        self.start_position_manager = StartPositionManager(self.map_path)
-        self.start_position = self.start_position_manager.next()
+        self.start_position = self.environment.next_starting_position()
         self.start_angle = 0.0
         self.num_rays = 60
         self.max_distance = 200
@@ -84,7 +82,7 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.agent.position = self.start_position_manager.next()
+        self.agent.position = self.environment.next_starting_position()
         self.agent.angle = random.uniform(0, 2 * np.pi)
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         measurements = self.lidar.measurement(self.agent)
@@ -132,7 +130,7 @@ class UniCycleBasicEnv(gym.Env):
         return False
 
 
-    def _render_frame(self, measurements: np.ndarray):
+    def _render_frame(self, measurements: np.ndarray) -> None:
         self.environment.update(self.agent, self.coverage_grid, measurements)
 
         if self.window is None:

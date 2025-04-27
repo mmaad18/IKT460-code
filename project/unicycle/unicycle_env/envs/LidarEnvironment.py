@@ -6,12 +6,15 @@ from skimage.io import imread
 from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
 from unicycle_env.envs.ObstacleDTO import ObstacleDTO
+from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
 class LidarEnvironment:
     def __init__(self, map_image_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM"):
         pygame.init()
         pygame.display.set_caption(map_window_name)
+
+        self.start_position_manager = StartPositionManager(map_image_path)
 
         self.surface_load = pygame.image.load(map_image_path)
         self.map_dimensions = map_dimensions
@@ -26,7 +29,11 @@ class LidarEnvironment:
         self.walls = (bw_image < 128).T
 
 
-    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, measurements: np.ndarray):
+    def next_starting_position(self) -> tuple[int, int]:
+        return self.start_position_manager.next()
+
+
+    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, measurements: np.ndarray) -> None:
         self.surface.blit(self.surface_load, (0, 0))
         self.draw_coverage_grid(coverage_grid)
         self.move_obstacles()
@@ -51,7 +58,7 @@ class LidarEnvironment:
     """
     COVERAGE GRID
     """
-    def draw_coverage_grid(self, coverage_grid: CoverageGridDTO):
+    def draw_coverage_grid(self, coverage_grid: CoverageGridDTO) -> None:
         grid = coverage_grid.grid
         res = coverage_grid.resolution
         color = coverage_grid.color
@@ -64,7 +71,7 @@ class LidarEnvironment:
     """
     AGENT
     """
-    def draw_lidar_data(self, measurements: np.ndarray, point_radius: int = 2):
+    def draw_lidar_data(self, measurements: np.ndarray, point_radius: int = 2) -> None:
         self.lidar_surface = self.surface.copy()
 
         for m in measurements:
@@ -75,7 +82,7 @@ class LidarEnvironment:
         self.surface.blit(self.lidar_surface, (0, 0))
 
 
-    def draw_agent(self, agent: Agent):
+    def draw_agent(self, agent: Agent) -> None:
         polygon = agent.get_polygon()
         pygame.draw.polygon(self.surface, agent.color, polygon)
 
@@ -83,17 +90,17 @@ class LidarEnvironment:
     """
     OBSTACLES
     """
-    def add_obstacle(self, position: tuple[int, int], size: tuple[int, int], color=(0, 0, 0)):
+    def add_obstacle(self, position: tuple[int, int], size: tuple[int, int], color=(0, 0, 0)) -> None:
         self.dynamic_obstacles.append(ObstacleDTO(position, size, color))
 
 
-    def move_obstacles(self):
+    def move_obstacles(self) -> None:
         for obstacle in self.dynamic_obstacles:
             ox, oy = obstacle.position
             obstacle.position = (ox + 2, oy)  # Move right
 
 
-    def draw_obstacles(self):
+    def draw_obstacles(self) -> None:
         for obstacle in self.dynamic_obstacles:
             pygame.draw.rect(self.surface, obstacle.color, (obstacle.position, obstacle.size))
 
