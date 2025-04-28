@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 
 from cython_module.lidar_core import lidar_measurement

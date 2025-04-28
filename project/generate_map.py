@@ -86,30 +86,100 @@ def draw_room(surface: Surface, origin: tuple[int, int], size: tuple[int, int], 
 MAPS
 """
 def draw_map_1(surface: Surface):
-    draw_room(surface, (40, 40), (200, 100), "0000")
-    draw_room(surface, (300, 400), (200, 100), "0110")
-    draw_room(surface, (500, 200), (100, 100), "1111")
-    draw_room(surface, (700, 300), (200, 100), "0110")
+    draw_room(surface, (40, 40), (200, 100), "0010")
+    draw_room(surface, (300, 40), (200, 100), "1010")
+    draw_room(surface, (600, 40), (200, 100), "1001")
+    draw_room(surface, (300, 250), (200, 150), "1100")
+    draw_room(surface, (600, 250), (200, 150), "0101")
+    draw_room(surface, (200, 450), (250, 100), "0011")
+
+def draw_map_2(surface: Surface):
+    draw_room(surface, (100, 100), (250, 150), "1110")
+    draw_room(surface, (450, 100), (150, 150), "1011")
+    draw_room(surface, (700, 100), (150, 150), "1100")
+    draw_room(surface, (300, 350), (200, 150), "0011")
+    draw_room(surface, (600, 400), (150, 100), "1001")
+
+def draw_map_3(surface: Surface):
+    draw_room(surface, (50, 50), (200, 150), "1111")
+    draw_room(surface, (350, 50), (200, 150), "1101")
+    draw_room(surface, (650, 50), (200, 150), "1011")
+    draw_room(surface, (200, 300), (250, 150), "0011")
+    draw_room(surface, (550, 300), (250, 150), "0011")
+
+def draw_map_4(surface: Surface):
+    draw_room(surface, (100, 50), (200, 150), "1000")
+    draw_room(surface, (350, 50), (200, 150), "0010")
+    draw_room(surface, (600, 50), (200, 150), "0001")
+    draw_room(surface, (250, 300), (200, 150), "1111")
+    draw_room(surface, (550, 300), (200, 150), "0110")
+
+def draw_map_5(surface: Surface):
+    draw_room(surface, (60, 60), (250, 150), "1010")
+    draw_room(surface, (360, 60), (250, 150), "0011")
+    draw_room(surface, (660, 60), (200, 150), "1010")
+    draw_room(surface, (260, 360), (250, 150), "0101")
+    draw_room(surface, (560, 360), (200, 150), "0010")
+
+def draw_map_6(surface: Surface):
+    draw_room(surface, (50, 100), (200, 100), "1100")
+    draw_room(surface, (300, 100), (200, 100), "0110")
+    draw_room(surface, (600, 100), (200, 100), "0101")
+    draw_room(surface, (150, 300), (250, 100), "0010")
+    draw_room(surface, (500, 300), (250, 100), "1000")
+
+def draw_map_7(surface: Surface):
+    draw_room(surface, (100, 100), (150, 150), "1010")
+    draw_room(surface, (350, 100), (150, 150), "1101")
+    draw_room(surface, (600, 100), (150, 150), "0011")
+    draw_room(surface, (100, 400), (200, 100), "1010")
+    draw_room(surface, (400, 400), (200, 100), "0011")
+
+def draw_map_8(surface: Surface):
+    draw_room(surface, (40, 40), (200, 150), "0110")
+    draw_room(surface, (300, 40), (200, 150), "1101")
+    draw_room(surface, (560, 40), (200, 150), "1001")
+    draw_room(surface, (200, 300), (200, 150), "0110")
+    draw_room(surface, (500, 300), (200, 150), "0011")
+
+def draw_map_9(surface: Surface):
+    draw_room(surface, (60, 60), (250, 150), "1011")
+    draw_room(surface, (400, 60), (250, 150), "1001")
+    draw_room(surface, (700, 60), (200, 150), "0110")
+    draw_room(surface, (300, 300), (200, 150), "0011")
+    draw_room(surface, (600, 300), (200, 150), "0010")
+
+def draw_map_10(surface: Surface):
+    draw_room(surface, (80, 80), (200, 100), "0010")
+    draw_room(surface, (350, 80), (200, 100), "0010")
+    draw_room(surface, (620, 80), (200, 100), "0110")
+    draw_room(surface, (200, 350), (200, 100), "1001")
+    draw_room(surface, (470, 350), (200, 100), "1100")
 
 
+"""
+MAIN
+"""
 def main():
-    # Map setup
     map_size = (1200, 600)
     bg_color = (255, 255, 255)
+    map_functions = [
+        draw_map_1, draw_map_2, draw_map_3, draw_map_4, draw_map_5,
+        draw_map_6, draw_map_7, draw_map_8, draw_map_9, draw_map_10
+    ]
 
     pygame.init()
-    surface = pygame.Surface(map_size)
-    surface.fill(bg_color)
 
-    # Draw the grid
-    draw_grid(surface)
+    for idx, draw_map_fn in enumerate(map_functions, start=1):
+        surface = pygame.Surface(map_size)
+        surface.fill(bg_color)
 
-    # Draw the walls
-    draw_outer_box(surface)
-    draw_map_1(surface)
+        draw_grid(surface)
+        draw_outer_box(surface)
+        draw_map_fn(surface)
 
-    # Save the surface to a file
-    pygame.image.save(surface, "generated_map.png")
+        pygame.image.save(surface, f"generated_maps/generated_map_{idx}.png")
+
     pygame.quit()
 
 
