@@ -5,6 +5,7 @@ from unicycle_env.envs.unicycle_basic import UniCycleBasicEnv
 
 env = UniCycleBasicEnv(render_mode="human")
 obs, info = env.reset()
+env_count = env.get_environment_count()
 
 # Control parameters
 v = 0.0
@@ -39,6 +40,10 @@ while running:
 
     if keys[pygame.K_ESCAPE]:
         running = False
+
+    if keys[pygame.K_o]:
+        env.select_environment(np.random.randint(0, env_count))
+        env.reset()
 
     action = np.array([v, omega], dtype=np.float32)
     obs, reward, terminated, truncated, info = env.step(action)

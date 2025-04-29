@@ -5,6 +5,8 @@ import numpy as np
 import pygame
 from gymnasium import spaces
 from pygame.color import Color
+from pathlib import Path
+from tqdm import tqdm
 
 from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
@@ -20,19 +22,23 @@ class UniCycleBasicEnv(gym.Env):
         self.clock = None
         self.window = None
 
-        # Map setup
-        self.map_path = "project/unicycle/unicycle_env/envs/generated_map_1.png"
-        self.map_dimensions = (1200, 600)
-        self.environment = LidarEnvironment(self.map_path, self.map_dimensions)
-
-        # Agent setup
-        self.start_position = self.environment.next_starting_position()
-        self.start_angle = 0.0
+        # Constants
         self.num_rays = 60
         self.max_distance = 200
-        self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=(0.5, 0.01))
-        self.agent = Agent(position=self.start_position, angle=self.start_angle, size=(20, 10), color=Color("green"))
+        self.uncertainty = (0.5, 0.01)
         self.dt = 1.0 / self.metadata["render_fps"]
+
+        # Environments setup
+        self.map_dimensions = (1200, 600)
+        self.environments = self._load_environments("project/generated_maps")
+
+        # Agent setup
+        self.lidar: Lidar = None
+        self.environment: LidarEnvironment = None
+        self.select_environment(1)
+
+        start_position = self.environment.next_starting_position()
+        self.agent = Agent(position=start_position, angle=0.0, size=(20, 10), color=Color("green"))
 
         # Action and observation space
         self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([50.0, 5.0]), shape=(2,), dtype=np.float32)
@@ -90,10 +96,30 @@ class UniCycleBasicEnv(gym.Env):
         return self._get_observation(measurements), {}
 
 
+    def select_environment(self, idx: int) -> None:
+        self.environment = self.environments[idx - 1]
+        self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=self.uncertainty)
+
+
+    def get_environment_count(self) -> int:
+        return len(self.environments)
+
+
+    def _load_environments(self, folder_path: str) -> list[LidarEnvironment]:
+        environments = []
+        folder = Path(folder_path)
+
+        for map_file in tqdm(sorted(folder.glob("generated_map_*.png")), desc="Loading maps"):
+            env = LidarEnvironment(str(map_file), self.map_dimensions)
+            environments.append(env)
+
+        return environments
+
+
     def _get_observation(self, measurements: np.ndarray) -> np.ndarray:
-        # measurements shape: (num_rays, 5) → [distance, angle, hit, x, y]
+        # measurements shape: (num_rays, 5) -> [distance, angle, hit, x, y]
         distances = np.clip(measurements[:, 0], 0, self.max_distance) / self.max_distance
-        hits = measurements[:, 2]  # assuming hit is the third column
+        hits = measurements[:, 2]
         obs_2d_normalized = np.stack((distances, hits), axis=1)
 
         # Normalize pose
