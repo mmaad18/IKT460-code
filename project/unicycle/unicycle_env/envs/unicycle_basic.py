@@ -30,14 +30,14 @@ class UniCycleBasicEnv(gym.Env):
 
         # Environments setup
         self.map_dimensions = (1200, 600)
-        self.environments = self._load_environments("project/generated_maps")
+        self.environments = self._load_environments("project/generated")
 
         # Agent setup
         self.lidar: Lidar = None
         self.environment: LidarEnvironment = None
         self.select_environment(1)
 
-        start_position = self.environment.next_starting_position()
+        start_position = self.environment.next_start_position()
         self.agent = Agent(position=start_position, angle=0.0, size=(20, 10), color=Color("green"))
 
         # Action and observation space
@@ -88,7 +88,7 @@ class UniCycleBasicEnv(gym.Env):
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.agent.position = self.environment.next_starting_position()
+        self.agent.position = self.environment.next_start_position()
         self.agent.angle = random.uniform(0, 2 * np.pi)
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         measurements = self.lidar.measurement(self.agent)
@@ -105,12 +105,16 @@ class UniCycleBasicEnv(gym.Env):
         return len(self.environments)
 
 
-    def _load_environments(self, folder_path: str) -> list[LidarEnvironment]:
+    def _load_environments(self, base_folder: str) -> list[LidarEnvironment]:
         environments = []
-        folder = Path(folder_path)
+        maps_folder = Path(base_folder) / "maps"
+        start_positions_folder = Path(base_folder) / "start_positions"
 
-        for map_file in tqdm(sorted(folder.glob("generated_map_*.png")), desc="Loading maps"):
-            env = LidarEnvironment(str(map_file), self.map_dimensions)
+        for map_file in tqdm(sorted(maps_folder.glob("map_*.png")), desc="Loading maps"):
+            map_filename = map_file.stem
+            start_positions_path = start_positions_folder / f"{map_filename}.npy"
+
+            env = LidarEnvironment(str(map_file), str(start_positions_path), self.map_dimensions)
             environments.append(env)
 
         return environments

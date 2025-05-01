@@ -10,11 +10,11 @@ from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
 class LidarEnvironment:
-    def __init__(self, map_image_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM"):
+    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM"):
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
-        self.start_position_manager = StartPositionManager(map_image_path)
+        self.start_position_manager = StartPositionManager(start_positions_path)
 
         self.surface_load = pygame.image.load(map_image_path)
         self.map_dimensions = map_dimensions
@@ -29,7 +29,7 @@ class LidarEnvironment:
         self.walls = (bw_image < 128).T
 
 
-    def next_starting_position(self) -> tuple[int, int]:
+    def next_start_position(self) -> tuple[int, int]:
         return self.start_position_manager.next()
 
 
