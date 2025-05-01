@@ -69,16 +69,15 @@ def main() -> None:
     map_size = (1200, 600)
     bg_color = (255, 255, 255)
     map_functions = [
-        #draw_map_1, draw_map_2, draw_map_3,
-        draw_map_4,
-        # draw_map_5,
-        #draw_map_6, draw_map_7, draw_map_8, draw_map_9, draw_map_10,
+        #draw_map_1, draw_map_2, draw_map_3, draw_map_4, draw_map_5,
+        # draw_map_6, draw_map_7, draw_map_8,
+        draw_map_9, #draw_map_10,
         #draw_map_11, draw_map_12, draw_map_13
     ]
 
     pygame.init()
 
-    for idx, draw_map_fn in tqdm(enumerate(map_functions, start=4), total=len(map_functions), desc="Generating maps"):
+    for idx, draw_map_fn in tqdm(enumerate(map_functions, start=9), total=len(map_functions), desc="Generating maps"):
         surface = pygame.Surface(map_size)
         surface.fill(bg_color)
 
