@@ -159,16 +159,17 @@ def draw_map_11(surface: Surface) -> None:
         draw_room(surface, (x, y), room_size, exits[i], door_width=100)
 
 def draw_map_12(surface: Surface) -> None:
-    draw_room(surface, (100, 100), (200, 150), "1110")
-    draw_room(surface, (360, 100), (200, 150), "1011")
-    draw_room(surface, (620, 100), (200, 150), "1100")
-    draw_room(surface, (250, 350), (200, 100), "1010")
-    draw_room(surface, (500, 350), (200, 100), "0011")
+    draw_room(surface, (120, 120), (200, 150), "1110")
+    draw_room(surface, (700, 170), (350, 150), "1011")
+    draw_room(surface, (400, 340), (200, 150), "1100")
 
 def draw_map_13(surface: Surface) -> None:
-    draw_room(surface, (100, 100), (200, 150), "1110")
-    draw_room(surface, (360, 100), (200, 150), "1011")
-    draw_room(surface, (620, 100), (200, 150), "1100")
-    draw_room(surface, (250, 350), (200, 100), "1010")
-    draw_room(surface, (500, 350), (200, 100), "0011")
+    draw_room(surface, (40, 40), (160, 160), "1111")
+    draw_room(surface, (1000, 40), (160, 160), "1111")
+    draw_room(surface, (40, 400), (160, 160), "1111")
+    draw_room(surface, (1000, 400), (160, 160), "1111")
+    draw_room(surface, (300, 150), (600, 300), "1111", door_width=200)
+
+
+
 
