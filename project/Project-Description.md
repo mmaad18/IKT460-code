@@ -37,6 +37,11 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 - A2C (Advantage Actor-Critic)
 - A3C (Asynchronous Actor-Critic Agents)
 
+## Notes:
 
+- Dont use all maps for training 
+- Maps must be diverse
+- Add dynamic obstacles? Too much work?
+- 
 
 
