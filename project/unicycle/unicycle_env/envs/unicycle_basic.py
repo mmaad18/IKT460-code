@@ -41,7 +41,7 @@ class UniCycleBasicEnv(gym.Env):
         self.agent = Agent(position=start_position, angle=0.0, size=(20, 10), color=Color("green"))
 
         # Action and observation space
-        self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([50.0, 5.0]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-250.0, -10.0]), high=np.array([250.0, 10.0]), shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2 + 3,), dtype=np.float32)
 
         # Coverage grid

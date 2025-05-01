@@ -22,16 +22,16 @@ while running:
 
     # WASD or arrow keys
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        v = 50.0
+        v = 250.0
     elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        v = -50.0
+        v = -250.0
     else:
         v = 0.0
 
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        omega = 5.0
+        omega = 10.0
     elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        omega = -5.0
+        omega = -10.0
     else:
         omega = 0.0
 

@@ -80,7 +80,7 @@ def main() -> None:
         surface = pygame.Surface(map_size)
         surface.fill(bg_color)
 
-        draw_grid(surface)
+        #draw_grid(surface)
         draw_outer_box(surface)
         draw_map_fn(surface)
 
