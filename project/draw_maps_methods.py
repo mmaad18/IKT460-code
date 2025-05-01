@@ -128,25 +128,35 @@ def draw_map_8(surface: Surface) -> None:
         draw_room(surface, (x, y), room_size, "0000")
 
 def draw_map_9(surface: Surface) -> None:
-    draw_room(surface, (60, 60), (250, 150), "1011")
-    draw_room(surface, (400, 60), (250, 150), "1001")
-    draw_room(surface, (700, 60), (200, 150), "0110")
-    draw_room(surface, (300, 300), (200, 150), "0011")
-    draw_room(surface, (600, 300), (200, 150), "0010")
+    draw_room(surface, (40, 40), (1120, 520), "0000")
 
 def draw_map_10(surface: Surface) -> None:
-    draw_room(surface, (80, 80), (200, 100), "0010")
-    draw_room(surface, (350, 80), (200, 100), "0010")
-    draw_room(surface, (620, 80), (200, 100), "0110")
-    draw_room(surface, (200, 350), (200, 100), "1001")
-    draw_room(surface, (470, 350), (200, 100), "1100")
+    draw_room(surface, (40, 130), (140, 140), "0100")
+    draw_room(surface, (280, 350), (250, 210), "1000", door_width=100)
+    draw_room(surface, (650, 320), (400, 100), "0101")
+    draw_room(surface, (700, 40), (200, 150), "0010")
 
 def draw_map_11(surface: Surface) -> None:
-    draw_room(surface, (60, 60), (200, 100), "1010")
-    draw_room(surface, (300, 60), (200, 100), "0011")
-    draw_room(surface, (540, 60), (200, 100), "1011")
-    draw_room(surface, (180, 240), (250, 150), "0011")
-    draw_room(surface, (500, 240), (250, 150), "0011")
+    room_size = (380, 180)
+    spacing_x = -10
+    spacing_y = -10
+    cols = 3
+    origin_x, origin_y = 40, 40
+
+    exits = [
+        "0110", "0101", "0001",
+        "1100", "0101", "0011",
+        "0100", "0101", "1001",
+    ]
+
+    for i in range(9):
+        row = i // cols
+        col = i % cols
+
+        x = origin_x + col * (room_size[0] + spacing_x)
+        y = origin_y + row * (room_size[1] + spacing_y)
+
+        draw_room(surface, (x, y), room_size, exits[i], door_width=100)
 
 def draw_map_12(surface: Surface) -> None:
     draw_room(surface, (100, 100), (200, 150), "1110")
