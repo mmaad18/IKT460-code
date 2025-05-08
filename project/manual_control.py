@@ -29,9 +29,9 @@ while running:
         v = 0.0
 
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        omega = 10.0
+        omega = 5.0
     elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        omega = -10.0
+        omega = -5.0
     else:
         omega = 0.0
 

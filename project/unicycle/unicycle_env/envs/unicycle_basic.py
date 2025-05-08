@@ -15,7 +15,7 @@ from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 
 
 class UniCycleBasicEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 50}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
     def __init__(self, render_mode=None):
         self.render_mode = render_mode
@@ -24,8 +24,7 @@ class UniCycleBasicEnv(gym.Env):
 
         # Constants
         self.num_rays = 60
-        self.max_distance = 200
-        self.uncertainty = (0.5, 0.01)
+        self.max_distance = 250
         self.dt = 1.0 / self.metadata["render_fps"]
 
         # Environments setup
@@ -38,19 +37,19 @@ class UniCycleBasicEnv(gym.Env):
         self.select_environment(1)
 
         start_position = self.environment.next_start_position()
-        self.agent = Agent(position=start_position, angle=0.0, size=(20, 10), color=Color("green"))
+        self.agent = Agent(position=start_position, angle=0.0, size=(25, 16), color=Color("green"))
 
         # Action and observation space
-        self.action_space = spaces.Box(low=np.array([-250.0, -10.0]), high=np.array([250.0, 10.0]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([-500.0, -5.0]), high=np.array([250.0, 5.0]), shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2 + 3,), dtype=np.float32)
 
         # Coverage grid
-        self.grid_resolution = 5
+        self.grid_resolution = 10
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         self.prev_coverage = 0
 
         # Rewards
-        self.time_penalty = -0.02
+        self.time_penalty = -1.0 / self.dt
         self.omega_penalty = -0.2
         self.collision_penalty = -100.0
 
@@ -98,7 +97,7 @@ class UniCycleBasicEnv(gym.Env):
 
     def select_environment(self, idx: int) -> None:
         self.environment = self.environments[idx - 1]
-        self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=self.uncertainty)
+        self.lidar = Lidar(self.environment, max_distance=self.max_distance, num_rays=self.num_rays, uncertainty=(1.0, 0.01))
 
 
     def get_environment_count(self) -> int:
@@ -127,7 +126,7 @@ class UniCycleBasicEnv(gym.Env):
         obs_2d_normalized = np.stack((distances, hits), axis=1)
 
         # Normalize pose
-        x, y, angle = self.agent.get_pose_noisy(sigma_position=0.5, sigma_angle=0.01)
+        x, y, angle = self.agent.get_pose_noisy(sigma_position=1.0, sigma_angle=0.01)
         width, height = self.map_dimensions
         pose_normalized = np.array([
             x / width,
