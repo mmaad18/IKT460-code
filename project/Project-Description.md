@@ -33,7 +33,7 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 - DDPG (Deep Deterministic Policy Gradient)
 - TD3 (Twin Delayed Deep Deterministic Policy Gradient)
 
-- SAC (Soft Actor-Critic)
+- **SAC** (Soft Actor-Critic)
 - A2C (Advantage Actor-Critic)
 - A3C (Asynchronous Actor-Critic Agents)
 
@@ -46,6 +46,7 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 - Add dynamic obstacles? Too much work?
 - Use all maps for training and testing?
 - Do acceleration control instead of velocity?
+- Save video of training and testing?
 - 
 
 
