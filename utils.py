@@ -40,12 +40,10 @@ def display_info_project():
     print("GPU Name: " + str(torch.cuda.get_device_name(0)))
 
 
-def load_device():
+def load_device() -> str:
     return (
-        "cuda"
-        if torch.cuda.is_available()
-        else "mps"
-        if torch.backends.mps.is_available()
-        else "cpu"
+        "cuda" if torch.cuda.is_available() else 
+        "mps" if torch.backends.mps.is_available() else
+        "cpu"
     )
 

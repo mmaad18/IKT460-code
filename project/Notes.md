@@ -16,7 +16,10 @@ Implementing Monte Carlo Control for the 2D Unicycle Model seems infeasible due 
 Monte Carlo methods typically require discretization of the state and action spaces, which may not be practical for this project. 
 Instead, we can focus on implementing Q-Learning or SARSA, which are more suitable for continuous spaces.
 
+## DQN
 
+- Target network is updated every step using soft update.
+- 
 
 
 
