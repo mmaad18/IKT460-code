@@ -1,3 +1,5 @@
+import numpy as np
+
 import unicycle_env
 
 import gymnasium as gym
@@ -37,13 +39,13 @@ device = torch.device(
     "cpu"
 )
 
-# BATCH_SIZE is the number of transitions sampled from the replay buffer
-# GAMMA is the discount factor as mentioned in the previous section
-# EPS_START is the starting value of epsilon
-# EPS_END is the final value of epsilon
-# EPS_DECAY controls the rate of exponential decay of epsilon, higher means a slower decay
-# TAU is the update rate of the target network
-# LR is the learning rate of the ``AdamW`` optimizer
+# BATCH_SIZE: Number of transitions sampled from the replay buffer
+# GAMMA: Discount factor
+# EPS_START: Starting value of epsilon
+# EPS_END: Final value of epsilon
+# EPS_DECAY: Controls the rate of exponential decay for epsilon, higher means a slower decay
+# TAU: Update rate of the target network
+# LR: Learning rate of the `AdamW` optimizer
 BATCH_SIZE = 128
 GAMMA = 0.99
 EPS_START = 0.9
@@ -52,12 +54,10 @@ EPS_DECAY = 1000
 TAU = 0.005
 LR = 1e-4
 
-# Get number of actions and states
 n_actions = len(action_mapping)
 state_0, info = env.reset()
 n_observations = len(state_0)
 
-# Initialize policy and target networks
 policy_net = DQN(n_observations, n_actions).to(device)
 target_net = DQN(n_observations, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
@@ -67,7 +67,6 @@ memory = ReplayMemory(10000)
 
 
 steps_done = 0
-
 def select_action(state):
     global steps_done
     sample = random.random()
@@ -84,8 +83,6 @@ def select_action(state):
 
 
 episode_durations = []
-
-
 def plot_durations(show_result=False):
     plt.figure(1)
     durations_t = torch.tensor(episode_durations, dtype=torch.float)
@@ -106,18 +103,14 @@ def plot_durations(show_result=False):
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
-
 def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
-    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-    # detailed explanation). This converts batch-array of Transitions
-    # to Transition of batch-arrays.
+    # This converts batch-array of Transitions, to Transition of batch-arrays.
     batch = Transition(*zip(*transitions))
 
     # Compute a mask of non-final states and concatenate the batch elements
-    # (a final state would've been the one after which simulation ended)
     non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
                                             batch.next_state)), device=device, dtype=torch.bool)
     non_final_next_states = torch.cat([s for s in batch.next_state
@@ -155,15 +148,18 @@ def optimize_model():
 
 
 if torch.cuda.is_available() or torch.backends.mps.is_available():
-    num_episodes = 3000
+    num_episodes = 2000
 else:
     num_episodes = 50
 
+unwrapped_env = env.unwrapped
+env_count = unwrapped_env.get_environment_count()
+
 for i_episode in range(num_episodes):
-    # Initialize the environment and get its state
+    unwrapped_env.select_environment(np.random.randint(0, env_count))
     state, info = env.reset()
     state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    for t in count():
+    for t in range(2000):
         action = select_action(state)
         observation, reward, terminated, truncated, _ = env.step(action.item())
         reward = torch.tensor([reward], device=device)
@@ -174,13 +170,8 @@ for i_episode in range(num_episodes):
         else:
             next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
-        # Store the transition in memory
         memory.push(state, action, next_state, reward)
-
-        # Move to the next state
         state = next_state
-
-        # Perform one step of the optimization (on the policy network)
         optimize_model()
 
         # Soft update of the target network's weights
