@@ -7,15 +7,14 @@ Transition = namedtuple('Transition',
 
 class ReplayMemory:
 
-    def __init__(self, capacity):
+    def __init__(self, capacity: int) -> None:
         self.memory = deque([], maxlen=capacity)
 
-    def push(self, *args):
-        """Save a transition"""
-        self.memory.append(Transition(*args))
+    def push(self, transition: Transition) -> None:
+        self.memory.append(transition)
 
-    def sample(self, batch_size):
+    def sample(self, batch_size) -> list[Transition]:
         return random.sample(self.memory, batch_size)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.memory)

@@ -33,7 +33,7 @@ def lidar_measurement(
             y2 = <int>(y1 - distance * sin_a)
 
             if 0 <= x2 < width and 0 <= y2 < height:
-                if obstacle_map[x2, y2]:  # Assuming boolean NumPy map
+                if obstacle_map[x2, y2]:
                     hit = 1.0
                     measurements[i, 0] = distance
                     measurements[i, 1] = relative_angles[i]

@@ -1,5 +1,3 @@
-import pygame
-from pygame import Surface
 import numpy as np
 from scipy.signal import convolve2d
 from skimage.io import imread, imsave
@@ -28,7 +26,6 @@ OUTER BOX
 """
 def draw_outer_box(surface: Surface, map_size=(1200, 600), wall_thickness=10, wall_color=(0, 0, 0)) -> None:
     outer_box = [
-        # Outer box
         pygame.Rect(40, 40, map_size[0] - 80, wall_thickness), # Top
         pygame.Rect(40, map_size[1] - wall_thickness - 40, map_size[0] - 80, wall_thickness), # Bottom
         pygame.Rect(40, 40, wall_thickness, map_size[1] - 80), # Left

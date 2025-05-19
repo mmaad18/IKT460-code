@@ -19,6 +19,10 @@ Instead, we can focus on implementing Q-Learning or SARSA, which are more suitab
 ## DQN
 
 - Target network is updated every step using soft update.
+ 
+## A2C
+
+- Source: https://openai.com/index/openai-baselines-acktr-a2c/ 
 - 
 
 

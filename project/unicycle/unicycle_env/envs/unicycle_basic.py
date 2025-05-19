@@ -17,7 +17,7 @@ from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 class UniCycleBasicEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
-    def __init__(self, render_mode=None):
+    def __init__(self, render_mode=None) -> None:
         self.render_mode = render_mode
         self.clock = None
         self.window = None
@@ -54,7 +54,7 @@ class UniCycleBasicEnv(gym.Env):
         self.collision_penalty = -100.0
 
         self.v_reward = 0.75
-        self.coverage_reward = 100.0
+        self.coverage_reward = 10.0
 
 
     def step(self, action: np.ndarray):

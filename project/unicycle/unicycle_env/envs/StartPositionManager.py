@@ -2,7 +2,7 @@ import numpy as np
 
 
 class StartPositionManager:
-    def __init__(self, start_positions_path: str):
+    def __init__(self, start_positions_path: str) -> None:
         self.idx = 0
         self.starting_positions_count = -1
         self.starting_positions = np.load(start_positions_path)

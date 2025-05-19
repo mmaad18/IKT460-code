@@ -6,7 +6,7 @@ from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 
 
 class Lidar:
-    def __init__(self, environment: LidarEnvironment, max_distance: int, num_rays: int, uncertainty: tuple[float, float]):
+    def __init__(self, environment: LidarEnvironment, max_distance: int, num_rays: int, uncertainty: tuple[float, float]) -> None:
         self.environment = environment
         self.max_distance = max_distance
         self.num_rays = num_rays

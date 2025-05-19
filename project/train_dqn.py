@@ -1,37 +1,22 @@
 import numpy as np
+from torch import Tensor
 
 import unicycle_env
 
 import gymnasium as gym
 import math
 import random
-import matplotlib.pyplot as plt
-from itertools import count
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from project.rl_algorithms.DQN import DQN
+from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import ReplayMemory, Transition
 from unicycle_env.wrappers import DiscreteActions
 
-action_mapping = [
-    [250.0, 0.0],  # Forward
-    [-50.0, 0.0],  # Backward
-    [0.0, 5.0], # Turn right
-    [0.0, -5.0],  # Turn left
-    [250.0, 5.0],  # Forward right
-    [250.0, -5.0],  # Forward left
-    [-50.0, 5.0],  # Backward right
-    [-50.0, -5.0],  # Backward left
-
-]
-
 cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array")
 env = DiscreteActions(cont_env, action_mapping)
-
-plt.ion()
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else
@@ -66,12 +51,9 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-steps_done = 0
-def select_action(state):
-    global steps_done
+def select_action(state: np.ndarray, step_count: int) -> Tensor:
     sample = random.random()
-    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
-    steps_done += 1
+    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * step_count / EPS_DECAY)
     if sample > eps_threshold:
         with torch.no_grad():
             # t.max(1) will return the largest column value of each row.
@@ -82,32 +64,11 @@ def select_action(state):
         return torch.tensor([[env.action_space.sample()]], device=device, dtype=torch.long)
 
 
-episode_durations = []
-def plot_durations(show_result=False):
-    plt.figure(1)
-    durations_t = torch.tensor(episode_durations, dtype=torch.float)
-    if show_result:
-        plt.title('Result')
-    else:
-        plt.clf()
-        plt.title('Training...')
-    plt.xlabel('Episode')
-    plt.ylabel('Duration')
-    plt.plot(durations_t.numpy())
-    # Take 100 episode averages and plot them too
-    if len(durations_t) >= 100:
-        means = durations_t.unfold(0, 100, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(99), means))
-        plt.plot(means.numpy())
-
-    plt.pause(0.001)  # pause a bit so that plots are updated
-
-
-def optimize_model():
+def optimize_model() -> None:
     if len(memory) < BATCH_SIZE:
         return
     transitions = memory.sample(BATCH_SIZE)
-    # This converts batch-array of Transitions, to Transition of batch-arrays.
+    # Batch-array of Transitions => Transition of batch-arrays.
     batch = Transition(*zip(*transitions))
 
     # Compute a mask of non-final states and concatenate the batch elements
@@ -147,53 +108,48 @@ def optimize_model():
     optimizer.step()
 
 
-if torch.cuda.is_available() or torch.backends.mps.is_available():
+def main() -> None:
+    unwrapped_env = env.unwrapped
+    env_count = unwrapped_env.get_environment_count()
+
+    episode_durations = []
+    step_count = 0
     num_episodes = 2000
-else:
-    num_episodes = 50
 
-unwrapped_env = env.unwrapped
-env_count = unwrapped_env.get_environment_count()
+    for i_episode in range(num_episodes):
+        unwrapped_env.select_environment(np.random.randint(0, env_count))
+        state, info = env.reset()
+        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+        for t in range(2000):
+            action = select_action(state, step_count)
+            step_count += 1
+            observation, reward, terminated, truncated, _ = env.step(action.item())
+            reward = torch.tensor([reward], device=device)
+            done = terminated or truncated
 
-for i_episode in range(num_episodes):
-    unwrapped_env.select_environment(np.random.randint(0, env_count))
-    state, info = env.reset()
-    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    for t in range(2000):
-        action = select_action(state)
-        observation, reward, terminated, truncated, _ = env.step(action.item())
-        reward = torch.tensor([reward], device=device)
-        done = terminated or truncated
+            if terminated:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
-        if terminated:
-            next_state = None
-        else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+            memory.push(Transition(state, action, next_state, reward))
+            state = next_state
+            optimize_model()
 
-        memory.push(state, action, next_state, reward)
-        state = next_state
-        optimize_model()
+            # Soft update of the target network's weights
+            # θ′ ← τ θ + (1 − τ) θ′
+            target_net_state_dict = target_net.state_dict()
+            policy_net_state_dict = policy_net.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+            target_net.load_state_dict(target_net_state_dict)
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 − τ) θ′
-        target_net_state_dict = target_net.state_dict()
-        policy_net_state_dict = policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_net.load_state_dict(target_net_state_dict)
+            if done:
+                episode_durations.append(t + 1)
+                break
 
-        if done:
-            episode_durations.append(t + 1)
-
-            if i_episode % 100 == 0:
-                plot_durations()
-            break
-
-torch.save(policy_net.state_dict(), 'dqn_checkpoint.pth')
-print('Complete')
-plot_durations(show_result=True)
-plt.ioff()
-plt.show()
+    torch.save(policy_net.state_dict(), 'dqn_checkpoint.pth')
+    print('Complete')
 
 
 

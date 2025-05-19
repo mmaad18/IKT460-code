@@ -3,19 +3,8 @@ import numpy as np
 import torch
 import unicycle_env
 
-from project.rl_algorithms.DQN import DQN
+from project.rl_algorithms.DQN import DQN, action_mapping
 from unicycle_env.wrappers import DiscreteActions
-
-action_mapping = [
-    [250.0, 0.0],  # Forward
-    [-50.0, 0.0],  # Backward
-    [0.0, 5.0],    # Turn right
-    [0.0, -5.0],   # Turn left
-    [250.0, 5.0],  # Forward right
-    [250.0, -5.0], # Forward left
-    [-50.0, 5.0],  # Backward right
-    [-50.0, -5.0], # Backward left
-]
 
 env = gymnasium.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")
 env = DiscreteActions(env, action_mapping)
@@ -32,7 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else
 
 model = DQN(n_observations, n_actions).to(device)
 
-model.load_state_dict(torch.load('dqn_checkpoint.pth', map_location=device))
+model.load_state_dict(torch.load('dqn_checkpoint_1.pth', map_location=device))
 model.eval()
 
 obs, info = env.reset()

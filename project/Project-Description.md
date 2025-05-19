@@ -47,6 +47,8 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 - Use all maps for training and testing?
 - Do acceleration control instead of velocity?
 - Save video of training and testing?
+- Punish visiting the same place.
+- Larger penalty for hitting walls.
 - 
 
 

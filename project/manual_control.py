@@ -7,7 +7,6 @@ env = UniCycleBasicEnv(render_mode="human")
 obs, info = env.reset()
 env_count = env.get_environment_count()
 
-# Control parameters
 v = 0.0
 omega = 0.0
 
@@ -20,11 +19,11 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    # WASD or arrow keys
+    # WASD or arrow keys => control the agent
     if keys[pygame.K_UP] or keys[pygame.K_w]:
         v = 250.0
     elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        v = -250.0
+        v = -50.0
     else:
         v = 0.0
 
@@ -35,12 +34,15 @@ while running:
     else:
         omega = 0.0
 
+    # Space => reset
     if keys[pygame.K_SPACE]:
         obs, info = env.reset()
 
+    # Escape => quit
     if keys[pygame.K_ESCAPE]:
         running = False
 
+    # o => select a random environment
     if keys[pygame.K_o]:
         env.select_environment(np.random.randint(0, env_count))
         env.reset()

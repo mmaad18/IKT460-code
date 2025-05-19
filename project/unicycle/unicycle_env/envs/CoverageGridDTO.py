@@ -11,7 +11,7 @@ class CoverageGridDTO:
     color: Color = field(init=False)
     grid: np.ndarray = field(init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         w, h = self.map_dimensions
         self.color = Color("lightblue")
         self.grid = np.zeros((w // self.resolution, h // self.resolution), dtype=bool)

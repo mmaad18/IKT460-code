@@ -10,7 +10,7 @@ from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
 class LidarEnvironment:
-    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM"):
+    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM") -> None:
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
