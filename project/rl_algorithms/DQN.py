@@ -36,7 +36,7 @@ class DQN(nn.Module):
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, output_dim)
-        )
+        ).to(self.device)
 
         self.target_net = nn.Sequential(
             nn.Linear(input_dim, 128),
@@ -44,7 +44,7 @@ class DQN(nn.Module):
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, output_dim)
-        )
+        ).to(self.device)
 
         self.learning_rate = learning_rate
         self.memory_capacity = memory_capacity
