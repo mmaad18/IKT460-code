@@ -62,7 +62,11 @@ class DQN(nn.Module):
         return self.policy_net(x)
 
 
-    def select_action(self, env: DiscreteActions, state: np.ndarray, step_count: int) -> torch.Tensor:
+    def memory_push(self, transition: Transition) -> None:
+        self.memory.push(transition)
+
+
+    def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> torch.Tensor:
         sample = random.random()
         eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(-1. * step_count / self.eps_decay)
 
