@@ -10,7 +10,6 @@ from tqdm import tqdm
 import gymnasium as gym
 
 class A2C(nn.Module):
-    
     def __init__(
             self,
             n_features: int,
@@ -53,11 +52,13 @@ class A2C(nn.Module):
         self.critic_optim = optim.RMSprop(self.critic.parameters(), lr=critic_lr)
         self.actor_optim = optim.RMSprop(self.actor.parameters(), lr=actor_lr)
 
+
     def forward(self, x: np.ndarray) -> tuple[torch.Tensor, torch.Tensor]:
         x = torch.Tensor(x).to(self.device)
         state_values = self.critic(x)  # shape: [n_envs,]
         action_logits_vec = self.actor(x)  # shape: [n_envs, n_actions]
         return (state_values, action_logits_vec)
+
 
     def select_action(
             self, x: np.ndarray
@@ -70,6 +71,7 @@ class A2C(nn.Module):
         action_log_probs = action_pd.log_prob(actions)
         entropy = action_pd.entropy()
         return (actions, action_log_probs, state_values, entropy)
+
 
     def get_losses(
             self,
@@ -104,6 +106,7 @@ class A2C(nn.Module):
         )
         return (critic_loss, actor_loss)
 
+
     def update_parameters(
             self, critic_loss: torch.Tensor, actor_loss: torch.Tensor
     ) -> None:
@@ -114,3 +117,4 @@ class A2C(nn.Module):
         self.actor_optim.zero_grad()
         actor_loss.backward()
         self.actor_optim.step()
+

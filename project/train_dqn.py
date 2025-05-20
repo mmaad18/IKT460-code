@@ -1,5 +1,4 @@
 import numpy as np
-from torch import Tensor
 
 import unicycle_env
 
@@ -51,7 +50,7 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-def select_action(state: np.ndarray, step_count: int) -> Tensor:
+def select_action(state: np.ndarray, step_count: int) -> torch.Tensor:
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * step_count / EPS_DECAY)
     if sample > eps_threshold:
