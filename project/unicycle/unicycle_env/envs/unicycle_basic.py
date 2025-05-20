@@ -39,8 +39,12 @@ class UniCycleBasicEnv(gym.Env):
         start_position = self.environment.next_start_position()
         self.agent = Agent(position=start_position, angle=0.0, size=(25, 16), color=Color("green"))
 
+        self.v_max = 250.0
+        self.v_min = -50.0
+        self.omega_max = 5.0
+
         # Action and observation space
-        self.action_space = spaces.Box(low=np.array([-50.0, -5.0]), high=np.array([250.0, 5.0]), shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([self.v_min, -self.omega_max]), high=np.array([self.v_max, self.omega_max]), shape=(2,), dtype=np.float32)
         self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2 + 3,), dtype=np.float32)
 
         # Coverage grid
@@ -50,10 +54,10 @@ class UniCycleBasicEnv(gym.Env):
 
         # Rewards
         self.time_penalty = -1.0 / self.dt
-        self.omega_penalty = -0.2
-        self.collision_penalty = -100.0
+        self.omega_penalty = -1.0 / self.omega_max
+        self.collision_penalty = -1000.0
 
-        self.v_reward = 0.75
+        self.v_reward = 25.0 / self.v_max
         self.coverage_reward = 10.0
 
 

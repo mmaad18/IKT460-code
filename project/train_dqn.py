@@ -1,4 +1,5 @@
 import numpy as np
+from tqdm import tqdm
 
 import unicycle_env
 
@@ -8,6 +9,7 @@ import torch
 
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
+from project.utils import plot_statistics
 from unicycle_env.wrappers import DiscreteActions
 
 
@@ -39,14 +41,17 @@ def main() -> None:
 
     TAU = 0.005
     episode_durations = []
+    episode_rewards = []
     step_count = 0
     num_episodes = 2000
+    episode_max_length = 2000
 
-    for i_episode in range(num_episodes):
+    for i_episode in tqdm(range(num_episodes)):
         unwrapped_env.select_environment(np.random.randint(0, env_count))
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-        for t in range(2000):
+
+        for t in range(episode_max_length):
             action = dqn_agent.select_action(env, state, step_count)
             step_count += 1
             observation, reward, terminated, truncated, _ = env.step(action.item())
@@ -68,11 +73,20 @@ def main() -> None:
             policy_net_state_dict = dqn_agent.policy_net.state_dict()
             for key in policy_net_state_dict:
                 target_net_state_dict[key] = policy_net_state_dict[key] * TAU + target_net_state_dict[key] * (1 - TAU)
+
             dqn_agent.target_net.load_state_dict(target_net_state_dict)
 
             if done:
                 episode_durations.append(t + 1)
+                episode_rewards.append(reward.item())
                 break
+
+        if i_episode % 100 == 0:
+            print(f"Episode {i_episode}, average reward: {np.mean(episode_rewards[-10:]):.2f}, "
+                  f"average duration: {np.mean(episode_durations[-10:]):.2f}")
+
+            plot_statistics(episode_rewards, episode_durations, "DQN")
+
 
     torch.save(dqn_agent.policy_net.state_dict(), 'dqn_checkpoint.pth')
     env.close()
