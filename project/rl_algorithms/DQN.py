@@ -23,9 +23,17 @@ action_mapping = [
 
 class DQN(nn.Module):
     def __init__(
-            self, device: torch.device, input_dim: int, output_dim: int,
-            learning_rate: float, memory_capacity: int, eps_start: float, eps_end: float, eps_decay: int,
-            batch_size: int, gamma: float
+            self,
+            device: torch.device,
+            input_dim: int,
+            output_dim: int,
+            learning_rate: float,
+            memory_capacity: int,
+            eps_start: float,
+            eps_end: float,
+            eps_decay: int,
+            batch_size: int,
+            gamma: float
     ) -> None:
         super().__init__()
         self.device = device
@@ -80,6 +88,7 @@ class DQN(nn.Module):
     def optimize_model(self) -> None:
         if len(self.memory) < self.batch_size:
             return
+
         transitions = self.memory.sample(self.batch_size)
         # Batch-array of Transitions => Transition of batch-arrays.
         batch = Transition(*zip(*transitions))
