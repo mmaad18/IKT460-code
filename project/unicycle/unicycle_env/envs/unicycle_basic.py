@@ -54,11 +54,11 @@ class UniCycleBasicEnv(gym.Env):
 
         # Rewards
         self.time_penalty = -1.0 / self.dt
-        self.omega_penalty = -1.0 / self.omega_max
-        self.collision_penalty = -1000.0
+        self.omega_penalty = -0.5 / self.omega_max
+        self.collision_penalty = -100.0
 
-        self.v_reward = 25.0 / self.v_max
-        self.coverage_reward = 10.0
+        self.v_reward = 200.0 / self.v_max
+        self.coverage_reward = 20.0
 
 
     def step(self, action: np.ndarray):
@@ -143,7 +143,7 @@ class UniCycleBasicEnv(gym.Env):
 
     def _calculate_reward(self, action: np.ndarray) -> float:
         current = self.coverage_grid.coverage()
-        delta = current - self.prev_coverage
+        delta = current - self.prev_coverage - 0.1
         self.prev_coverage = current
 
         v, omega = float(action[0]), float(action[1])

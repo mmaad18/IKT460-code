@@ -43,8 +43,8 @@ def main() -> None:
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 2000
-    episode_max_length = 2000
+    num_episodes = 3000
+    episode_max_length = 3000
 
     for i_episode in tqdm(range(num_episodes)):
         unwrapped_env.select_environment(np.random.randint(0, env_count))
@@ -82,8 +82,8 @@ def main() -> None:
                 break
 
         if i_episode % 100 == 0:
-            print(f"Episode {i_episode}, average reward: {np.mean(episode_rewards[-10:]):.2f}, "
-                  f"average duration: {np.mean(episode_durations[-10:]):.2f}")
+            print(f"Episode {i_episode}, average reward: {np.mean(episode_rewards[-100:]):.2f}, "
+                  f"average duration: {np.mean(episode_durations[-100:]):.2f}")
 
             plot_statistics(episode_rewards, episode_durations, "DQN")
 

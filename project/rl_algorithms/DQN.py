@@ -62,6 +62,7 @@ class DQN(nn.Module):
         self.batch_size = batch_size
         self.gamma = gamma
 
+        self.target_net.load_state_dict(self.policy_net.state_dict())
         self.memory = ReplayMemory(self.memory_capacity)
         self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.learning_rate, amsgrad=True)
 
@@ -76,7 +77,7 @@ class DQN(nn.Module):
 
     def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> torch.Tensor:
         sample = random.random()
-        eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(-1. * step_count / self.eps_decay)
+        eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(-1.0 * step_count / self.eps_decay)
 
         if sample > eps_threshold:
             with torch.no_grad():
