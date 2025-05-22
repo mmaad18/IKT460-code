@@ -95,7 +95,7 @@ def main() -> None:
 
     torch.save(dqn_agent.policy_net.state_dict(), 'dqn_checkpoint.pth')
     env.close()
-    print('Complete')
+    print("Training complete.")
 
 
 main()

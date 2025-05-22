@@ -20,7 +20,16 @@ from unicycle_env.wrappers import DiscreteActions
 
 
 
-envs = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array")
+action_mapping = [
+    [250.0, 0.0],  # Forward
+    [-50.0, 0.0],  # Backward
+    [0.0, 5.0],  # Turn right
+    [0.0, -5.0],  # Turn left
+    [250.0, 5.0],  # Forward right
+    [250.0, -5.0],  # Forward left
+    [-50.0, 5.0],  # Backward right
+    [-50.0, -5.0],  # Backward left
+]
 
 
 # environment hyperparams
@@ -37,14 +46,16 @@ actor_lr = 0.001
 critic_lr = 0.005
 
 # Note: the actor has a slower learning rate so that the value targets become
-# more stationary and are theirfore easier to estimate for the critic
+# more stationary and are therefore easier to estimate for the critic
 
 # environment setup
-envs = gym.vector.make("unicycle_env/UniCycleBasicEnv-v0", num_envs=n_envs, max_episode_steps=600)
-
+envs = gym.vector.SyncVectorEnv([
+    lambda: DiscreteActions(gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array"), action_mapping)
+    for _ in range(n_envs)
+])
 
 obs_shape = envs.single_observation_space.shape[0]
-action_shape = envs.single_action_space.n
+action_shape = 8
 
 # set the device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -54,7 +65,7 @@ agent = A2C(obs_shape, action_shape, device, critic_lr, actor_lr, n_envs)
 
 
 # create a wrapper environment to save episode returns and episode lengths
-envs_wrapper = gym.wrappers.RecordEpisodeStatistics(envs, deque_size=n_envs * n_updates)
+#envs_wrapper = gym.wrappers.RecordEpisodeStatistics(envs)
 
 critic_losses = []
 actor_losses = []
@@ -73,19 +84,15 @@ for sample_phase in tqdm(range(n_updates)):
 
     # at the start of training reset all envs to get an initial state
     if sample_phase == 0:
-        states, info = envs_wrapper.reset(seed=42)
+        states, info = envs.reset(seed=42)
 
     # play n steps in our parallel environments to collect data
     for step in range(n_steps_per_update):
         # select an action A_{t} using S_{t} as input for the agent
-        actions, action_log_probs, state_value_preds, entropy = agent.select_action(
-            states
-        )
+        actions, action_log_probs, state_value_preds, entropy = agent.select_action(states)
 
         # perform the action A_{t} in the environment to get S_{t+1} and R_{t+1}
-        states, rewards, terminated, truncated, infos = envs_wrapper.step(
-            actions.cpu().numpy()
-        )
+        states, rewards, terminated, truncated, infos = envs.step(actions.cpu().numpy())
 
         ep_value_preds[step] = torch.squeeze(state_value_preds)
         ep_rewards[step] = torch.tensor(rewards, device=device)
@@ -116,4 +123,9 @@ for sample_phase in tqdm(range(n_updates)):
     actor_losses.append(actor_loss.detach().cpu().numpy())
     entropies.append(entropy.detach().mean().cpu().numpy())
 
+
+torch.save(agent.actor.state_dict(), "a2c_actor.pth")
+torch.save(agent.critic.state_dict(), "a2c_critic.pth")
+envs.close()
+print("Training complete.")
 
