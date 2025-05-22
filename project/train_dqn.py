@@ -1,3 +1,5 @@
+from itertools import count
+
 import numpy as np
 from tqdm import tqdm
 
@@ -9,12 +11,12 @@ import torch
 
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
-from project.utils import plot_statistics
+from project.utils import plot_statistics, coverage_stagnated
 from unicycle_env.wrappers import DiscreteActions
 
 
 def main() -> None:
-    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array")
+    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")
     env = DiscreteActions(cont_env, action_mapping)
     unwrapped_env = env.unwrapped
     env_count = unwrapped_env.get_environment_count()
@@ -43,20 +45,23 @@ def main() -> None:
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 3000
-    episode_max_length = 3000
+    num_episodes = 2000
+    episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
         unwrapped_env.select_environment(np.random.randint(0, env_count))
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
 
-        for t in range(episode_max_length):
+        coverage_history = []
+
+        for t in count():
             action = dqn_agent.select_action(env, state, step_count)
             step_count += 1
             observation, reward, terminated, truncated, _ = env.step(action.item())
+            coverage_history.append(unwrapped_env.get_coverage())
             reward = torch.tensor([reward], device=device)
-            done = terminated or truncated
+            done = terminated or truncated or t >= episode_max_length or coverage_stagnated(coverage_history, 2)
 
             if terminated:
                 next_state = None

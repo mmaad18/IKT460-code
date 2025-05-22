@@ -51,7 +51,14 @@ def load_device() -> str:
 
 
 def moving_average(data: list[float], window_size=10) -> np.ndarray:
-    return np.convolve(data, np.ones(window_size)/window_size, mode='valid')
+    return np.convolve(data, np.ones(window_size)/window_size, mode='same')
+
+
+def coverage_stagnated(coverage_history: list[int], limit: int) -> bool:
+    if len(coverage_history) < 100:
+        return False
+
+    return coverage_history[-1] - coverage_history[-100] < limit
 
 
 def plot_statistics(episode_rewards: list[float], episode_durations: list[float], suffix: str) -> None:

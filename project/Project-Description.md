@@ -49,6 +49,9 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 - Save video of training and testing?
 - Punish visiting the same place.
 - Larger penalty for hitting walls.
+- Use CNN for the LIDAR data?
+- Use LSTM for the LIDAR data?
+- Rank map difficulty by spawning area. More difficult => less area.
 - 
 
 

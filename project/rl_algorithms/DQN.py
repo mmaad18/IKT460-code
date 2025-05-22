@@ -1,5 +1,6 @@
 import math
 import random
+from typing import Mapping, Any
 
 import numpy as np
 import torch
@@ -73,6 +74,11 @@ class DQN(nn.Module):
 
     def memory_push(self, transition: Transition) -> None:
         self.memory.push(transition)
+
+
+    def update_networks(self, state_dict: Mapping[str, Any]) -> None:
+        self.policy_net.load_state_dict(state_dict)
+        self.target_net.load_state_dict(state_dict)
 
 
     def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> torch.Tensor:

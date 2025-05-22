@@ -57,8 +57,8 @@ class UniCycleBasicEnv(gym.Env):
         self.omega_penalty = -0.5 / self.omega_max
         self.collision_penalty = -100.0
 
-        self.v_reward = 200.0 / self.v_max
-        self.coverage_reward = 20.0
+        self.v_reward = 10.0 / self.v_max
+        self.coverage_reward = 500.0
 
 
     def step(self, action: np.ndarray):
@@ -108,6 +108,14 @@ class UniCycleBasicEnv(gym.Env):
         return len(self.environments)
 
 
+    def get_coverage(self) -> int:
+        return self.coverage_grid.coverage()
+
+
+    def get_coverage_percentage(self) -> float:
+        return self.coverage_grid.coverage_percentage()
+
+
     def _load_environments(self, base_folder: str) -> list[LidarEnvironment]:
         environments = []
         maps_folder = Path(base_folder) / "maps"
@@ -143,7 +151,7 @@ class UniCycleBasicEnv(gym.Env):
 
     def _calculate_reward(self, action: np.ndarray) -> float:
         current = self.coverage_grid.coverage()
-        delta = current - self.prev_coverage - 0.1
+        delta = current - self.prev_coverage
         self.prev_coverage = current
 
         v, omega = float(action[0]), float(action[1])

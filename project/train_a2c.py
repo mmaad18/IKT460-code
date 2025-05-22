@@ -40,40 +40,14 @@ critic_lr = 0.005
 # more stationary and are theirfore easier to estimate for the critic
 
 # environment setup
-if randomize_domain:
-    envs = gym.vector.AsyncVectorEnv(
-        [
-            lambda: gym.make(
-                "LunarLander-v3",
-                gravity=np.clip(
-                    np.random.normal(loc=-10.0, scale=1.0), a_min=-11.99, a_max=-0.01
-                ),
-                enable_wind=np.random.choice([True, False]),
-                wind_power=np.clip(
-                    np.random.normal(loc=15.0, scale=1.0), a_min=0.01, a_max=19.99
-                ),
-                turbulence_power=np.clip(
-                    np.random.normal(loc=1.5, scale=0.5), a_min=0.01, a_max=1.99
-                ),
-                max_episode_steps=600,
-            )
-            for i in range(n_envs)
-        ]
-    )
-
-else:
-    envs = gym.vector.make("LunarLander-v3", num_envs=n_envs, max_episode_steps=600)
+envs = gym.vector.make("unicycle_env/UniCycleBasicEnv-v0", num_envs=n_envs, max_episode_steps=600)
 
 
 obs_shape = envs.single_observation_space.shape[0]
 action_shape = envs.single_action_space.n
 
 # set the device
-use_cuda = False
-if use_cuda:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-else:
-    device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # init the agent
 agent = A2C(obs_shape, action_shape, device, critic_lr, actor_lr, n_envs)

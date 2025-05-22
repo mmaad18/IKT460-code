@@ -31,10 +31,14 @@ dqn_agent = DQN(
     gamma=0.99
 )
 
-dqn_agent.policy_net.load_state_dict(torch.load('dqn_checkpoint.pth', map_location=device))
+dqn_agent.update_networks(torch.load('dqn_checkpoint.pth', map_location=device))
 dqn_agent.policy_net.eval()
+dqn_agent.target_net.eval()
 
 obs, info = env.reset()
+
+unwrapped_env.select_environment(2)
+
 for _ in range(20000):
     obs_tensor = torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0)
     
@@ -44,6 +48,6 @@ for _ in range(20000):
     obs, reward, terminated, truncated, info = env.step(action)
     
     if terminated or truncated:
-        unwrapped_env.select_environment(np.random.randint(0, env_count))
+        #unwrapped_env.select_environment(np.random.randint(0, env_count))
         obs, info = env.reset()
 
