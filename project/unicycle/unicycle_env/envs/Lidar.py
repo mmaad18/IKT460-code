@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import NDArray
 
 from cython_module.lidar_core import lidar_measurement
 from unicycle_env.envs.Agent import Agent
@@ -25,7 +26,7 @@ class Lidar:
             self,
             agent: Agent,
             step: int = 2
-    ) -> np.ndarray:
+    ) -> NDArray[np.float32]:
         x, y = agent.position
         angle = agent.angle
         lidar_measurement(self.measurements, self.relative_angles, x, y, angle,

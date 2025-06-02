@@ -2,6 +2,7 @@ import numpy as np
 import pygame
 from pygame.color import Color
 from skimage.io import imread
+from numpy.typing import NDArray
 
 from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
@@ -10,7 +11,7 @@ from unicycle_env.envs.StartPositionManager import StartPositionManager
 
 
 class LidarEnvironment:
-    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name="LIDAR SIM") -> None:
+    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name: str="LIDAR SIM") -> None:
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
@@ -24,16 +25,16 @@ class LidarEnvironment:
         self.lidar_surface = self.surface.copy()
         self.dynamic_obstacles: list[ObstacleDTO] = []
 
-        image_array = imread(map_image_path)
-        bw_image = np.dot(image_array[..., :3], np.array([1/3, 1/3, 1/3]))
-        self.walls = (bw_image < 128).T
+        image_array: NDArray[np.uint8] = imread(map_image_path)
+        bw_image: NDArray[np.float64] = np.dot(image_array[..., :3], np.array([1.0/3.0, 1.0/3.0, 1.0/3.0]))
+        self.walls: NDArray[np.bool_] = (bw_image < 128).T
 
 
     def next_start_position(self) -> tuple[int, int]:
         return self.start_position_manager.next()
 
 
-    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, measurements: np.ndarray) -> None:
+    def update(self, agent: Agent, coverage_grid: CoverageGridDTO, measurements: NDArray[np.float32]) -> None:
         self.surface.blit(self.surface_load, (0, 0))
         self.draw_coverage_grid(coverage_grid)
         self.move_obstacles()
@@ -51,7 +52,7 @@ class LidarEnvironment:
         return self.walls[position]
 
 
-    def get_walls(self) -> np.ndarray:
+    def get_walls(self) -> NDArray[np.bool_]:
         return self.walls
 
 
@@ -71,7 +72,7 @@ class LidarEnvironment:
     """
     AGENT
     """
-    def draw_lidar_data(self, measurements: np.ndarray, point_radius: int = 2) -> None:
+    def draw_lidar_data(self, measurements: NDArray[np.float32], point_radius: int = 2) -> None:
         self.lidar_surface = self.surface.copy()
 
         for m in measurements:
@@ -90,7 +91,7 @@ class LidarEnvironment:
     """
     OBSTACLES
     """
-    def add_obstacle(self, position: tuple[int, int], size: tuple[int, int], color=(0, 0, 0)) -> None:
+    def add_obstacle(self, position: tuple[int, int], size: tuple[int, int], color: Color = Color(0, 0, 0)) -> None:
         self.dynamic_obstacles.append(ObstacleDTO(position, size, color))
 
 

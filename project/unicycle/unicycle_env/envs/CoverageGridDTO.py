@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from numpy.typing import NDArray
+
 import numpy as np
 from pygame.color import Color
 
@@ -9,7 +11,7 @@ class CoverageGridDTO:
     map_dimensions: tuple[int, int]
     resolution: int
     color: Color = field(init=False)
-    grid: np.ndarray = field(init=False)
+    grid: NDArray[np.bool_] = field(init=False)
 
     def __post_init__(self) -> None:
         w, h = self.map_dimensions
@@ -29,10 +31,10 @@ class CoverageGridDTO:
 
 
     def coverage(self) -> int:
-        return np.sum(self.grid)
+        return int(np.sum(self.grid))
 
 
     def coverage_percentage(self) -> float:
-        return np.sum(self.grid) / self.grid.size
+        return float(np.sum(self.grid)) / self.grid.size
 
 

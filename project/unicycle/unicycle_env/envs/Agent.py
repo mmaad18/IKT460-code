@@ -1,7 +1,9 @@
 import math
 from dataclasses import dataclass
+from typing import Final
 
 import numpy as np
+from numpy.typing import NDArray
 from pygame.color import Color
 
 
@@ -13,13 +15,13 @@ class Agent:
     color: Color
 
 
-    def apply_action(self, action: np.ndarray, dt: float) -> None:
+    def apply_action(self, action: NDArray[np.float64], dt: float) -> None:
         v, omega = float(action[0]), float(action[1])
         x, y = self.position
         theta = self.angle
 
-        new_x = x + v * np.cos(theta) * dt
-        new_y = y - v * np.sin(theta) * dt
+        new_x: float = x + v * np.cos(theta) * dt
+        new_y: float = y - v * np.sin(theta) * dt
         new_theta = theta + omega * dt
 
         self.position = (new_x, new_y)
@@ -29,23 +31,23 @@ class Agent:
     def get_polygon(self) -> list[tuple[int, int]]:
         x, y = self.position
         length, width = self.size
-        pi_2 = math.pi / 2.0
+        pi_2: Final = math.pi / 2.0
 
-        tip = (x + length * math.cos(self.angle), y - length * math.sin(self.angle))
+        tip = round((x + length * math.cos(self.angle))), round(y - length * math.sin(self.angle))
 
         base_left = (
-            x + width * 0.5 * math.cos(self.angle + pi_2),
-            y - width * 0.5 * math.sin(self.angle + pi_2),
+            round(x + width * 0.5 * math.cos(self.angle + pi_2)),
+            round(y - width * 0.5 * math.sin(self.angle + pi_2)),
         )
         base_right = (
-            x + width * 0.5 * math.cos(self.angle - pi_2),
-            y - width * 0.5 * math.sin(self.angle - pi_2),
+            round(x + width * 0.5 * math.cos(self.angle - pi_2)),
+            round(y - width * 0.5 * math.sin(self.angle - pi_2)),
         )
 
         return [
-            tuple(map(round, tip)),
-            tuple(map(round, base_left)),
-            tuple(map(round, base_right)),
+            tip,
+            base_left,
+            base_right,
         ]
 
 

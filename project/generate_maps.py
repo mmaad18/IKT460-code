@@ -8,7 +8,7 @@ from project.draw_maps_methods import *
 """
 GRID
 """
-def draw_grid(surface: Surface, map_size=(1200, 600)) -> None:
+def draw_grid(surface: Surface, map_size: tuple[int, int]=(1200, 600)) -> None:
     grid_spacing = 10
     grid_color = (200, 200, 200)
 
@@ -24,7 +24,7 @@ def draw_grid(surface: Surface, map_size=(1200, 600)) -> None:
 """
 OUTER BOX
 """
-def draw_outer_box(surface: Surface, map_size=(1200, 600), wall_thickness=10, wall_color=(0, 0, 0)) -> None:
+def draw_outer_box(surface: Surface, map_size: tuple[int, int]=(1200, 600), wall_thickness: int=10, wall_color: Color=Color(0, 0, 0)) -> None:
     outer_box = [
         pygame.Rect(40, 40, map_size[0] - 80, wall_thickness), # Top
         pygame.Rect(40, map_size[1] - wall_thickness - 40, map_size[0] - 80, wall_thickness), # Bottom

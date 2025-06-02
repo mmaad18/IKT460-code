@@ -1,11 +1,11 @@
 import pygame
-from pygame import Surface
+from pygame import Surface, Color
 
 
 """
 ROOMS
 """
-def draw_room(surface: Surface, origin: tuple[int, int], size: tuple[int, int], exits: str = "0000", door_width: int = 60, wall_thickness: int = 10, wall_color=(0, 0, 0)) -> None:
+def draw_room(surface: Surface, origin: tuple[int, int], size: tuple[int, int], exits: str = "0000", door_width: int = 60, wall_thickness: int = 10, wall_color: Color = Color(0, 0, 0)) -> None:
     """
     exits: A string of 4 characters (0 or 1) representing the exits: Top, Right, Bottom, Left.
     """
@@ -17,7 +17,7 @@ def draw_room(surface: Surface, origin: tuple[int, int], size: tuple[int, int], 
 
     top_exit, right_exit, bottom_exit, left_exit = exits
 
-    walls = []
+    walls: list[pygame.Rect] = []
 
     # TOP wall
     if top_exit == "0":

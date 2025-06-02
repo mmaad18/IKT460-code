@@ -1,0 +1,9 @@
+{
+  "include": ["project"],
+  "exclude": ["gymnasium", "udemy"],
+  "strict": ["project"],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": true,
+  "reportUnusedVariable": true
+}

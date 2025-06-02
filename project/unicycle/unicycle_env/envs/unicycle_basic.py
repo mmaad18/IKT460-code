@@ -7,6 +7,7 @@ from gymnasium import spaces
 from pygame.color import Color
 from pathlib import Path
 from tqdm import tqdm
+from numpy.typing import NDArray
 
 from unicycle_env.envs.Agent import Agent
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
@@ -17,7 +18,7 @@ from unicycle_env.envs.LidarEnvironment import LidarEnvironment
 class UniCycleBasicEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
-    def __init__(self, render_mode=None) -> None:
+    def __init__(self, render_mode: str = None) -> None:
         self.render_mode = render_mode
         self.clock = None
         self.window = None
@@ -32,8 +33,8 @@ class UniCycleBasicEnv(gym.Env):
         self.environments = self._load_environments("project/generated")
 
         # Agent setup
-        self.lidar: Lidar = None
-        self.environment: LidarEnvironment = None
+        self.lidar: Lidar
+        self.environment: LidarEnvironment
         self.select_environment(1)
 
         start_position = self.environment.next_start_position()
@@ -61,7 +62,7 @@ class UniCycleBasicEnv(gym.Env):
         self.coverage_reward = 500.0
 
 
-    def step(self, action: np.ndarray):
+    def step(self, action: NDArray[np.float64]) -> tuple[NDArray[np.float32], float, bool, bool, dict]:
         # Apply unicycle kinematics
         self.agent.apply_action(action, self.dt)
 
@@ -73,7 +74,7 @@ class UniCycleBasicEnv(gym.Env):
         self.coverage_grid.visited(self.agent.position)
         reward = self._calculate_reward(action)
         terminated = self._check_collision()
-        info = {}
+        info: dict = {}
 
         if self.render_mode == "human":
             self._render_frame(measurements)
@@ -88,7 +89,7 @@ class UniCycleBasicEnv(gym.Env):
         return obs_flat, reward, terminated, False, info
 
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None) -> tuple[NDArray[np.float32], dict]:
         super().reset(seed=seed)
 
         self.agent.position = self.environment.next_start_position()
@@ -117,7 +118,7 @@ class UniCycleBasicEnv(gym.Env):
 
 
     def _load_environments(self, base_folder: str) -> list[LidarEnvironment]:
-        environments = []
+        environments: list[LidarEnvironment] = []
         maps_folder = Path(base_folder) / "maps"
         start_positions_folder = Path(base_folder) / "start_positions"
 
@@ -131,10 +132,10 @@ class UniCycleBasicEnv(gym.Env):
         return environments
 
 
-    def _get_observation(self, measurements: np.ndarray) -> np.ndarray:
+    def _get_observation(self, measurements: NDArray[np.float32]) -> NDArray[np.float32]:
         # measurements shape: (num_rays, 5) -> [distance, angle, hit, x, y]
         distances = np.clip(measurements[:, 0], 0, self.max_distance) / self.max_distance
-        hits = measurements[:, 2]
+        hits: NDArray[np.float32] = measurements[:, 2]
         obs_2d_normalized = np.stack((distances, hits), axis=1)
 
         # Normalize pose
@@ -149,7 +150,7 @@ class UniCycleBasicEnv(gym.Env):
         return np.concatenate((obs_2d_normalized.ravel(), pose_normalized), axis=0)
 
 
-    def _calculate_reward(self, action: np.ndarray) -> float:
+    def _calculate_reward(self, action: NDArray[np.float64]) -> float:
         current = self.coverage_grid.coverage()
         delta = current - self.prev_coverage
         self.prev_coverage = current
@@ -171,7 +172,7 @@ class UniCycleBasicEnv(gym.Env):
         return False
 
 
-    def _render_frame(self, measurements: np.ndarray) -> None:
+    def _render_frame(self, measurements: NDArray[np.float32]) -> None:
         self.environment.update(self.agent, self.coverage_grid, measurements)
 
         if self.window is None:
@@ -187,12 +188,12 @@ class UniCycleBasicEnv(gym.Env):
         self.clock.tick(self.metadata["render_fps"])
 
 
-    def render(self, mode='human'):
+    def render(self, mode: str='human') -> NDArray[np.uint8] | None:
         if self.render_mode == "rgb_array":
             return self._render_frame()
 
 
-    def close(self):
+    def close(self) -> None:
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
