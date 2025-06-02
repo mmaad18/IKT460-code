@@ -1,9 +1,9 @@
 import numpy as np
 from numpy.typing import NDArray
 
-from cython_module.lidar_core import lidar_measurement
-from unicycle_env.envs.Agent import Agent
-from unicycle_env.envs.LidarEnvironment import LidarEnvironment
+from cython_module.lidar_core import lidar_measurement  # pyright: ignore [reportUnknownVariableType]
+from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.LidarEnvironment import LidarEnvironment  # pyright: ignore [reportMissingTypeStubs]
 
 
 class Lidar:

@@ -1,4 +1,5 @@
 import random
+from typing import Optional, Any
 
 import gymnasium as gym
 import numpy as np
@@ -9,16 +10,16 @@ from pathlib import Path
 from tqdm import tqdm
 from numpy.typing import NDArray
 
-from unicycle_env.envs.Agent import Agent
-from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
-from unicycle_env.envs.Lidar import Lidar
-from unicycle_env.envs.LidarEnvironment import LidarEnvironment
+from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.Lidar import Lidar  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.LidarEnvironment import LidarEnvironment  # pyright: ignore [reportMissingTypeStubs]
 
 
-class UniCycleBasicEnv(gym.Env):
+class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
-    def __init__(self, render_mode: str = None) -> None:
+    def __init__(self, render_mode: Optional[str] = None) -> None:
         self.render_mode = render_mode
         self.clock = None
         self.window = None
@@ -62,7 +63,7 @@ class UniCycleBasicEnv(gym.Env):
         self.coverage_reward = 500.0
 
 
-    def step(self, action: NDArray[np.float64]) -> tuple[NDArray[np.float32], float, bool, bool, dict]:
+    def step(self, action: NDArray[np.float64]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
         # Apply unicycle kinematics
         self.agent.apply_action(action, self.dt)
 
@@ -74,7 +75,7 @@ class UniCycleBasicEnv(gym.Env):
         self.coverage_grid.visited(self.agent.position)
         reward = self._calculate_reward(action)
         terminated = self._check_collision()
-        info: dict = {}
+        info: dict[str, Any] = {}
 
         if self.render_mode == "human":
             self._render_frame(measurements)
@@ -89,7 +90,7 @@ class UniCycleBasicEnv(gym.Env):
         return obs_flat, reward, terminated, False, info
 
 
-    def reset(self, seed=None, options=None) -> tuple[NDArray[np.float32], dict]:
+    def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
         super().reset(seed=seed)
 
         self.agent.position = self.environment.next_start_position()
@@ -188,7 +189,7 @@ class UniCycleBasicEnv(gym.Env):
         self.clock.tick(self.metadata["render_fps"])
 
 
-    def render(self, mode: str='human') -> NDArray[np.uint8] | None:
+    def render(self, mode: str='human') -> None:
         if self.render_mode == "rgb_array":
             return self._render_frame()
 

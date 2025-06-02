@@ -1,13 +1,13 @@
 import numpy as np
 import pygame
 from pygame.color import Color
-from skimage.io import imread
+from skimage.io import imread  # pyright: ignore [reportMissingTypeStubs, reportUnknownVariableType]
 from numpy.typing import NDArray
 
-from unicycle_env.envs.Agent import Agent
-from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO
-from unicycle_env.envs.ObstacleDTO import ObstacleDTO
-from unicycle_env.envs.StartPositionManager import StartPositionManager
+from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.ObstacleDTO import ObstacleDTO  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.StartPositionManager import StartPositionManager  # pyright: ignore [reportMissingTypeStubs]
 
 
 class LidarEnvironment:
