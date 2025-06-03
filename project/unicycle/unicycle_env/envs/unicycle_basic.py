@@ -13,6 +13,7 @@ from numpy.typing import NDArray
 from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeStubs]
 from unicycle_env.envs.CoverageGridDTO import CoverageGridDTO  # pyright: ignore [reportMissingTypeStubs]
 from unicycle_env.envs.Lidar import Lidar  # pyright: ignore [reportMissingTypeStubs]
+from unicycle_env.envs.Imu import Imu  # pyright: ignore [reportMissingTypeStubs]
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment  # pyright: ignore [reportMissingTypeStubs]
 
 
@@ -27,7 +28,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         # Constants
         self.num_rays = 60
         self.max_distance = 250
-        self.dt = 1.0 / self.metadata["render_fps"]
+        self.dt: float = 1.0 / self.metadata["render_fps"]
 
         # Environments setup
         self.map_dimensions = (1200, 600)
@@ -35,6 +36,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
 
         # Agent setup
         self.lidar: Lidar
+        self.Imu: Imu = Imu(last_pose=(0.0, 0.0, 0.0), last_velocity=(0.0, 0.0, 0.0))
         self.environment: LidarEnvironment
         self.select_environment(1)
 
@@ -68,8 +70,9 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         self.agent.apply_action(action, self.dt)
 
         # LIDAR observation
-        measurements = self.lidar.measurement(self.agent)
-        obs_flat = self._get_observation(measurements)
+        lidar_measurements = self.lidar.measurement(self.agent)
+        imu_measurements = self.Imu.measurement(self.agent, self.dt)
+        obs_flat = self._get_observation(lidar_measurements, imu_measurements)
 
         # Reward
         self.coverage_grid.visited(self.agent.position)
@@ -78,14 +81,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         info: dict[str, Any] = {}
 
         if self.render_mode == "human":
-            self._render_frame(measurements)
-
-        # Logging
-        if False:
-            print(f"  Action: v={float(action[0]):.2f}, omega={float(action[1]):.2f}")
-            print(f"  Pos: {self.agent.position}")
-            print(f"  Angle: {np.degrees(self.agent.angle):.1f}°")
-            print(f"  Coverage: {self.coverage_grid.coverage()}, Reward: {reward:.2f}, Terminated: {terminated}")
+            self._render_frame(lidar_measurements)
 
         return obs_flat, reward, terminated, False, info
 
@@ -96,9 +92,10 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         self.agent.position = self.environment.next_start_position()
         self.agent.angle = random.uniform(0, 2 * np.pi)
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
-        measurements = self.lidar.measurement(self.agent)
+        lidar_measurements = self.lidar.measurement(self.agent)
+        imu_measurements = self.Imu.measurement(self.agent, self.dt)
 
-        return self._get_observation(measurements), {}
+        return self._get_observation(lidar_measurements, imu_measurements), {}
 
 
     def select_environment(self, idx: int) -> None:
@@ -133,22 +130,18 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         return environments
 
 
-    def _get_observation(self, measurements: NDArray[np.float32]) -> NDArray[np.float32]:
+    def _get_observation(self, lidar_measurements: NDArray[np.float32], imu_measurements: NDArray[np.float32]) -> NDArray[np.float32]:
         # measurements shape: (num_rays, 5) -> [distance, angle, hit, x, y]
-        distances = np.clip(measurements[:, 0], 0, self.max_distance) / self.max_distance
-        hits: NDArray[np.float32] = measurements[:, 2]
+        distances = np.clip(lidar_measurements[:, 0], 0, self.max_distance) / self.max_distance
+        hits: NDArray[np.float32] = lidar_measurements[:, 2]
         obs_2d_normalized = np.stack((distances, hits), axis=1)
 
-        # Normalize pose
-        x, y, angle = self.agent.get_pose_noisy(sigma_position=1.0, sigma_angle=0.01)
-        width, height = self.map_dimensions
-        pose_normalized = np.array([
-            x / width,
-            y / height,
-            angle % (2 * np.pi) / (2 * np.pi)
-        ], dtype=np.float32)
+        # Normalize accelerations
+        lin_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[:2], -self.v_max, self.v_max) / self.v_max
+        ang_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[2], -self.omega_max, self.omega_max) / self.omega_max
+        acceleration_normalized = np.concatenate((lin_acc_normalized, np.array([ang_acc_normalized], dtype=np.float32)), axis=0)
 
-        return np.concatenate((obs_2d_normalized.ravel(), pose_normalized), axis=0)
+        return np.concatenate((obs_2d_normalized.ravel(), acceleration_normalized), axis=0)
 
 
     def _calculate_reward(self, action: NDArray[np.float64]) -> float:
@@ -189,9 +182,8 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         self.clock.tick(self.metadata["render_fps"])
 
 
-    def render(self, mode: str='human') -> None:
-        if self.render_mode == "rgb_array":
-            return self._render_frame()
+    def render(self, mode: str='human') -> str:
+        return mode
 
 
     def close(self) -> None:
