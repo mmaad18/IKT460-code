@@ -12,7 +12,7 @@ import torch
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
 from project.utils import plot_statistics, coverage_stagnated
-from unicycle_env.wrappers import DiscreteActions
+from unicycle_env.wrappers import DiscreteActions  # pyright: ignore [reportMissingTypeStubs]
 
 
 def main() -> None:

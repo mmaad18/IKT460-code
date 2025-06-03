@@ -17,7 +17,7 @@ from unicycle_env.envs.Imu import Imu  # pyright: ignore [reportMissingTypeStubs
 from unicycle_env.envs.LidarEnvironment import LidarEnvironment  # pyright: ignore [reportMissingTypeStubs]
 
 
-class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
+class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 100}
 
     def __init__(self, render_mode: Optional[str] = None) -> None:
@@ -41,15 +41,23 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         self.select_environment(1)
 
         start_position = self.environment.next_start_position()
-        self.agent = Agent(position=start_position, angle=0.0, size=(25, 16), color=Color("green"))
+        self.agent = Agent(position=start_position, angle=0.0, size=(25, 20), color=Color("green"))
 
         self.v_max = 250.0
         self.v_min = -50.0
         self.omega_max = 5.0
 
         # Action and observation space
-        self.action_space = spaces.Box(low=np.array([self.v_min, -self.omega_max]), high=np.array([self.v_max, self.omega_max]), shape=(2,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=0.0, high=(self.max_distance+100.0), shape=(self.num_rays * 2 + 3,), dtype=np.float32)
+        self.action_space = spaces.Box(
+            low=np.array([self.v_min, -self.omega_max]),
+            high=np.array([self.v_max, self.omega_max]),
+            shape=(2,), dtype=np.float32
+        )
+        self.observation_space = spaces.Box(
+            low=0.0,
+            high=(self.max_distance+100.0),
+            shape=(self.num_rays * 2 + 3,), dtype=np.float32
+        )
 
         # Coverage grid
         self.grid_resolution = 10
@@ -65,7 +73,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         self.coverage_reward = 500.0
 
 
-    def step(self, action: NDArray[np.float64]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
+    def step(self, action: NDArray[np.float32]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
         # Apply unicycle kinematics
         self.agent.apply_action(action, self.dt)
 
@@ -75,7 +83,8 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         obs_flat = self._get_observation(lidar_measurements, imu_measurements)
 
         # Reward
-        self.coverage_grid.visited(self.agent.position)
+        self.coverage_grid.visited(self.agent.get_sweepers()[0])
+        self.coverage_grid.visited(self.agent.get_sweepers()[1])
         reward = self._calculate_reward(action)
         terminated = self._check_collision()
         info: dict[str, Any] = {}
@@ -144,7 +153,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float64]]):
         return np.concatenate((obs_2d_normalized.ravel(), acceleration_normalized), axis=0)
 
 
-    def _calculate_reward(self, action: NDArray[np.float64]) -> float:
+    def _calculate_reward(self, action: NDArray[np.float32]) -> float:
         current = self.coverage_grid.coverage()
         delta = current - self.prev_coverage
         self.prev_coverage = current

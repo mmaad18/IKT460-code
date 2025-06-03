@@ -15,7 +15,7 @@ class Agent:
     color: Color
 
 
-    def apply_action(self, action: NDArray[np.float64], dt: float) -> None:
+    def apply_action(self, action: NDArray[np.float32], dt: float) -> None:
         v, omega = float(action[0]), float(action[1])
         x, y = self.position
         theta = self.angle
@@ -49,6 +49,23 @@ class Agent:
             base_left,
             base_right,
         ]
+
+
+    def get_sweepers(self) -> list[tuple[int, int]]:
+        x, y = self.position
+        width = self.size[1]
+        pi_2: Final = math.pi / 2.0
+
+        left_sweeper = (
+            round(x + width * 0.25 * math.cos(self.angle + pi_2)),
+            round(y - width * 0.25 * math.sin(self.angle + pi_2)),
+        )
+        right_sweeper = (
+            round(x + width * 0.25 * math.cos(self.angle - pi_2)),
+            round(y - width * 0.25 * math.sin(self.angle - pi_2)),
+        )
+
+        return [left_sweeper, right_sweeper]
 
 
     def get_pose(self) -> tuple[float, float, float]:
