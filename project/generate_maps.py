@@ -81,9 +81,9 @@ def main() -> None:
         draw_outer_box(surface)
         draw_map_fn(surface)
 
-        map_path = f"generated/maps/map_{idx}.png"
-        start_map_path = f"generated/start_maps/map_{idx}.png"
-        positions_path = f"generated/start_positions/map_{idx}.npy"
+        map_path = f"project/generated/maps/map_{idx}.png"
+        start_map_path = f"project/generated/start_maps/map_{idx}.png"
+        positions_path = f"project/generated/start_positions/map_{idx}.npy"
 
         pygame.image.save(surface, map_path)
         generate_start_map_and_positions(map_path, start_map_path, positions_path)
