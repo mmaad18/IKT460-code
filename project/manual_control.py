@@ -7,8 +7,8 @@ env = UniCycleBasicEnv(render_mode="human")
 obs, info = env.reset()
 env_count = env.get_environment_count()
 
-v = 0.0
-omega = 0.0
+a = 0.0
+alpha = 0.0
 
 running = True
 while running:
@@ -21,18 +21,18 @@ while running:
 
     # WASD or arrow keys => control the agent
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        v = 250.0
+        a = 250.0
     elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        v = -50.0
+        a = -500.0
     else:
-        v = 0.0
+        a = 0.0
 
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        omega = 5.0
+        alpha = 100.0
     elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        omega = -5.0
+        alpha = -100.0
     else:
-        omega = 0.0
+        alpha = 0.0
 
     # Space => reset
     if keys[pygame.K_SPACE]:
@@ -47,7 +47,7 @@ while running:
         env.select_environment(np.random.randint(0, env_count))
         env.reset()
 
-    action = np.array([v, omega], dtype=np.float32)
+    action = np.array([a, alpha], dtype=np.float32)
     obs, reward, terminated, truncated, info = env.step(action)
 
     if terminated or truncated:

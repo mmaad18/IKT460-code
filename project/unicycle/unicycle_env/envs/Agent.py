@@ -1,4 +1,5 @@
 import math
+import random
 from dataclasses import dataclass
 from typing import Final
 
@@ -13,16 +14,40 @@ class Agent:
     angle: float
     size: tuple[float, float]
     color: Color
+    velocity: float = 0.0
+    omega: float = 0.0
+    v_damp: Final = 0.5
+    omega_damp: Final = 0.75
+    v_max = 250.0
+    v_min = -50.0
+    omega_max = 5.0
+    
+    
+    def reset(self) -> None:
+        self.angle = random.uniform(0, 2 * np.pi)
+        self.velocity = 0.0
+        self.omega = 0.0
 
 
     def apply_action(self, action: NDArray[np.float32], dt: float) -> None:
-        v, omega = float(action[0]), float(action[1])
+        a, alpha = action
+        
+        self.velocity += a * dt
+        self.omega += alpha * dt
+        
+        # Damping
+        self.velocity *= (1.0 - self.v_damp * dt)
+        self.omega *= (1.0 - self.omega_damp * dt)
+        
+        self.velocity = np.clip(self.velocity, self.v_min, self.v_max)
+        self.omega = np.clip(self.omega, -self.omega_max, self.omega_max)
+        
         x, y = self.position
         theta = self.angle
 
-        new_x: float = x + v * np.cos(theta) * dt
-        new_y: float = y - v * np.sin(theta) * dt
-        new_theta = theta + omega * dt
+        new_x: float = x + self.velocity * np.cos(theta) * dt
+        new_y: float = y - self.velocity * np.sin(theta) * dt
+        new_theta = theta + self.omega * dt
 
         self.position = (new_x, new_y)
         self.angle = new_theta % (2 * np.pi)

@@ -6,8 +6,8 @@ from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeS
 
 @dataclass
 class Imu:
-    last_pose: tuple[float, float, float]
-    last_velocity: tuple[float, float, float]
+    last_pose: tuple[float, float, float] = (0.0, 0.0, 0.0)
+    last_velocity: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
     def measurement(self, agent: Agent, dt: float) -> NDArray[np.float32]:
         pose = agent.get_pose()
@@ -25,5 +25,7 @@ class Imu:
 
         self.last_pose = pose
         self.last_velocity = (vx, vy, vtheta)
+        
+        print(f"IMU Measurement: pose={pose}, velocity=({vx}, {vy}, {vtheta}), acceleration=({ax}, {ay}, {az})")
 
         return np.array([ax, ay, az], dtype=np.float32)

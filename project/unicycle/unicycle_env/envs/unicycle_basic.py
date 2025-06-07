@@ -1,4 +1,3 @@
-import random
 from typing import Optional, Any
 
 import gymnasium as gym
@@ -36,7 +35,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
         # Agent setup
         self.lidar: Lidar
-        self.Imu: Imu = Imu(last_pose=(0.0, 0.0, 0.0), last_velocity=(0.0, 0.0, 0.0))
+        self.Imu: Imu = Imu()
         self.environment: LidarEnvironment
         self.select_environment(1)
 
@@ -98,8 +97,8 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
         super().reset(seed=seed)
 
+        self.agent.reset()
         self.agent.position = self.environment.next_start_position()
-        self.agent.angle = random.uniform(0, 2 * np.pi)
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
         lidar_measurements = self.lidar.measurement(self.agent)
         imu_measurements = self.Imu.measurement(self.agent, self.dt)

@@ -41,17 +41,6 @@ Autonomous Exploration and Coverage Using LIDAR and Deep Reinforcement Learning
 
 ## Notes:
 
-- Dont use all maps for training 
-- Maps must be diverse
-- Add dynamic obstacles? Too much work?
-- Use all maps for training and testing?
-- Do acceleration control instead of velocity?
-- Save video of training and testing?
-- Punish visiting the same place.
-- Larger penalty for hitting walls.
-- Use CNN for the LIDAR data?
-- Use LSTM for the LIDAR data?
-- Rank map difficulty by spawning area. More difficult => less area.
-- 
+
 
 
