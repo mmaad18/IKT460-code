@@ -40,7 +40,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.select_environment(1)
 
         start_position = self.environment.next_start_position()
-        self.agent = Agent(position=start_position, angle=0.0, size=(25, 20), color=Color("green"))
+        self.agent = Agent(position=start_position, angle=0.0)
 
         self.v_max = 250.0
         self.v_min = -50.0

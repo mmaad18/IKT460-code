@@ -6,26 +6,17 @@ from unicycle_env.envs.Agent import Agent  # pyright: ignore [reportMissingTypeS
 
 @dataclass
 class Imu:
-    last_pose: tuple[float, float, float] = (0.0, 0.0, 0.0)
     last_velocity: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
     def measurement(self, agent: Agent, dt: float) -> NDArray[np.float32]:
-        pose = agent.get_pose()
-        x, y, theta = pose
-
-        # Velocity
-        vx = (x - self.last_pose[0]) / dt
-        vy = (y - self.last_pose[1]) / dt
-        vtheta = (theta - self.last_pose[2]) / dt
-
-        # Acceleration
-        ax = (vx - self.last_velocity[0]) / dt
-        ay = (vy - self.last_velocity[1]) / dt
-        az = (vtheta - self.last_velocity[2]) / dt
-
-        self.last_pose = pose
-        self.last_velocity = (vx, vy, vtheta)
+        vx_local, vy_local, omega_local = agent.get_local_velocity()
         
-        print(f"IMU Measurement: pose={pose}, velocity=({vx}, {vy}, {vtheta}), acceleration=({ax}, {ay}, {az})")
+        ax_local = (vx_local - self.last_velocity[0]) / dt
+        ay_local = vx_local * omega_local
+        az_local = (omega_local - self.last_velocity[2]) / dt
 
-        return np.array([ax, ay, az], dtype=np.float32)
+        self.last_velocity = (vx_local, vy_local, omega_local)
+        
+        print("IMU measurement: ", ax_local, ay_local, az_local)
+
+        return np.array([ax_local, ay_local, az_local], dtype=np.float32)

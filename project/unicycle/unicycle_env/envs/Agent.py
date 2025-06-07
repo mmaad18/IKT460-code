@@ -1,6 +1,6 @@
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Final
 
 import numpy as np
@@ -12,8 +12,8 @@ from pygame.color import Color
 class Agent:
     position: tuple[float, float]
     angle: float
-    size: tuple[float, float]
-    color: Color
+    size: tuple[float, float] = (25.0, 20.0)
+    color: Color = field(init=False)
     velocity: float = 0.0
     omega: float = 0.0
     v_damp: Final = 0.5
@@ -21,6 +21,10 @@ class Agent:
     v_max = 250.0
     v_min = -50.0
     omega_max = 5.0
+
+
+    def __post_init__(self) -> None:
+        self.color = Color("green")
     
     
     def reset(self) -> None:
@@ -32,12 +36,12 @@ class Agent:
     def apply_action(self, action: NDArray[np.float32], dt: float) -> None:
         a, alpha = action
         
-        self.velocity += a * dt
-        self.omega += alpha * dt
-        
         # Damping
         self.velocity *= (1.0 - self.v_damp * dt)
         self.omega *= (1.0 - self.omega_damp * dt)
+
+        self.velocity += a * dt
+        self.omega += alpha * dt
         
         self.velocity = np.clip(self.velocity, self.v_min, self.v_max)
         self.omega = np.clip(self.omega, -self.omega_max, self.omega_max)
@@ -103,4 +107,8 @@ class Agent:
         noisy_angle = np.random.normal(self.angle, sigma_angle) % (2 * np.pi)
 
         return noisy_x, noisy_y, noisy_angle
+
+
+    def get_local_velocity(self) -> tuple[float, float, float]:
+        return self.velocity, 0.0, self.omega
 
