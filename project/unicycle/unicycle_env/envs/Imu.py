@@ -16,7 +16,5 @@ class Imu:
         az_local = (omega_local - self.last_velocity[2]) / dt
 
         self.last_velocity = (vx_local, vy_local, omega_local)
-        
-        print("IMU measurement: ", ax_local, ay_local, az_local)
 
         return np.array([ax_local, ay_local, az_local], dtype=np.float32)

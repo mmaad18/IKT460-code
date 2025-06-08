@@ -42,14 +42,14 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         start_position = self.environment.next_start_position()
         self.agent = Agent(position=start_position, angle=0.0)
 
-        self.v_max = 250.0
-        self.v_min = -50.0
-        self.omega_max = 5.0
+        self.a_min = -500.0
+        self.a_max = 250.0
+        self.alpha_max = 1000.0
 
         # Action and observation space
         self.action_space = spaces.Box(
-            low=np.array([self.v_min, -self.omega_max]),
-            high=np.array([self.v_max, self.omega_max]),
+            low=np.array([self.a_min, -self.alpha_max]),
+            high=np.array([self.a_max, self.alpha_max]),
             shape=(2,), dtype=np.float32
         )
         self.observation_space = spaces.Box(
@@ -57,6 +57,10 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
             high=(self.max_distance+100.0),
             shape=(self.num_rays * 2 + 3,), dtype=np.float32
         )
+
+        self.v_max = 250.0
+        self.v_min = -50.0
+        self.omega_max = 5.0
 
         # Coverage grid
         self.grid_resolution = 10
@@ -74,6 +78,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
     def step(self, action: NDArray[np.float32]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
         # Apply unicycle kinematics
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         self.agent.apply_action(action, self.dt)
 
         # LIDAR observation
@@ -84,14 +89,13 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         # Reward
         self.coverage_grid.visited(self.agent.get_sweepers()[0])
         self.coverage_grid.visited(self.agent.get_sweepers()[1])
-        reward = self._calculate_reward(action)
+        reward = self._calculate_reward()
         terminated = self._check_collision()
-        info: dict[str, Any] = {}
 
         if self.render_mode == "human":
             self._render_frame(lidar_measurements)
 
-        return obs_flat, reward, terminated, False, info
+        return obs_flat, reward, terminated, False, self._generate_info()
 
 
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
@@ -145,19 +149,19 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         obs_2d_normalized = np.stack((distances, hits), axis=1)
 
         # Normalize accelerations
-        lin_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[:2], -self.v_max, self.v_max) / self.v_max
-        ang_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[2], -self.omega_max, self.omega_max) / self.omega_max
+        lin_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[:2], -self.a_max, self.a_max) / self.a_max
+        ang_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[2], -self.alpha_max, self.alpha_max) / self.alpha_max
         acceleration_normalized = np.concatenate((lin_acc_normalized, np.array([ang_acc_normalized], dtype=np.float32)), axis=0)
 
         return np.concatenate((obs_2d_normalized.ravel(), acceleration_normalized), axis=0)
 
 
-    def _calculate_reward(self, action: NDArray[np.float32]) -> float:
+    def _calculate_reward(self) -> float:
         current = self.coverage_grid.coverage()
         delta = current - self.prev_coverage
         self.prev_coverage = current
 
-        v, omega = float(action[0]), float(action[1])
+        v, _, omega = self.agent.get_local_velocity()
         reward = self.time_penalty + self.coverage_reward * delta + self.v_reward * v + self.omega_penalty * abs(omega)
 
         if self._check_collision():
@@ -188,6 +192,17 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.window.blit(self.environment.surface, (0, 0))
         pygame.display.update()
         self.clock.tick(self.metadata["render_fps"])
+        
+        
+    def _generate_info(self) -> dict[str, Any]:
+        return {
+            "coverage": self.coverage_grid.coverage(),
+            "coverage_percentage": self.coverage_grid.coverage_percentage(),
+            "agent_position": self.agent.position,
+            "agent_angle": self.agent.angle,
+            "agent_velocity": self.agent.velocity,
+            "agent_omega": self.agent.omega
+        }
 
 
     def render(self, mode: str='human') -> str:
