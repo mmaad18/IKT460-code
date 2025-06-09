@@ -12,10 +12,10 @@ from pygame.color import Color
 class Agent:
     position: tuple[float, float]
     angle: float
-    size: tuple[float, float] = (25.0, 20.0)
-    color: Color = field(init=False)
     velocity: float = 0.0
     omega: float = 0.0
+    size: tuple[float, float] = (25.0, 20.0)
+    color: Color = field(init=False)
     v_damp: Final = 0.5
     omega_damp: Final = 0.75
     v_max = 250.0
@@ -34,11 +34,11 @@ class Agent:
 
 
     def apply_action(self, action: NDArray[np.float32], dt: float) -> None:
-        a, alpha = action
-        
         # Damping
         self.velocity *= (1.0 - self.v_damp * dt)
         self.omega *= (1.0 - self.omega_damp * dt)
+        
+        a, alpha = action
 
         self.velocity += a * dt
         self.omega += alpha * dt

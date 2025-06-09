@@ -15,6 +15,7 @@ class LidarEnvironment:
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
+        self.name = map_image_path.split("\\")[-1].split(".")[0]
         self.start_position_manager = StartPositionManager(start_positions_path)
 
         self.surface_load = pygame.image.load(map_image_path)

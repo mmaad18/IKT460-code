@@ -59,7 +59,8 @@ def main() -> None:
             action = dqn_agent.select_action(env, state, step_count)
             step_count += 1
             observation, reward, terminated, truncated, _ = env.step(action.item())
-            coverage_history.append(unwrapped_env.get_coverage())
+            # TODO: Fix coverage history
+            coverage_history.append(-1)
             reward = torch.tensor([reward], device=device)
             done = terminated or truncated or t >= episode_max_length or coverage_stagnated(coverage_history, 2)
 

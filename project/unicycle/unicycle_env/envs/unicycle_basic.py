@@ -4,7 +4,6 @@ import gymnasium as gym
 import numpy as np
 import pygame
 from gymnasium import spaces
-from pygame.color import Color
 from pathlib import Path
 from tqdm import tqdm
 from numpy.typing import NDArray
@@ -23,11 +22,13 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.render_mode = render_mode
         self.clock = None
         self.window = None
+        self.step_count = 0
 
         # Constants
         self.num_rays = 60
         self.max_distance = 250
         self.dt: float = 1.0 / self.metadata["render_fps"]
+        self.a_max = 2000.0
 
         # Environments setup
         self.map_dimensions = (1200, 600)
@@ -42,19 +43,15 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         start_position = self.environment.next_start_position()
         self.agent = Agent(position=start_position, angle=0.0)
 
-        self.a_min = -500.0
-        self.a_max = 250.0
-        self.alpha_max = 1000.0
-
         # Action and observation space
         self.action_space = spaces.Box(
-            low=np.array([self.a_min, -self.alpha_max]),
-            high=np.array([self.a_max, self.alpha_max]),
+            low=np.array([-500.0, -1000.0]),
+            high=np.array([250.0, 1000.0]),
             shape=(2,), dtype=np.float32
         )
         self.observation_space = spaces.Box(
             low=0.0,
-            high=(self.max_distance+100.0),
+            high=(self.max_distance+1.0),
             shape=(self.num_rays * 2 + 3,), dtype=np.float32
         )
 
@@ -77,8 +74,10 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
 
     def step(self, action: NDArray[np.float32]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
+        self.step_count += 1
+        
         # Apply unicycle kinematics
-        action = np.clip(action, self.action_space.low, self.action_space.high)
+        action = np.clip(action, self.action_space.low, self.action_space.high, dtype=np.float32)
         self.agent.apply_action(action, self.dt)
 
         # LIDAR observation
@@ -95,12 +94,14 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         if self.render_mode == "human":
             self._render_frame(lidar_measurements)
 
-        return obs_flat, reward, terminated, False, self._generate_info()
+        return obs_flat, reward, terminated, False, self._generate_info(action, obs_flat, reward, lidar_measurements, imu_measurements)
 
 
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
         super().reset(seed=seed)
+        self.step_count = 0
 
+        self.Imu.reset()
         self.agent.reset()
         self.agent.position = self.environment.next_start_position()
         self.coverage_grid = CoverageGridDTO(self.map_dimensions, self.grid_resolution)
@@ -117,14 +118,6 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
     def get_environment_count(self) -> int:
         return len(self.environments)
-
-
-    def get_coverage(self) -> int:
-        return self.coverage_grid.coverage()
-
-
-    def get_coverage_percentage(self) -> float:
-        return self.coverage_grid.coverage_percentage()
 
 
     def _load_environments(self, base_folder: str) -> list[LidarEnvironment]:
@@ -144,16 +137,13 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
     def _get_observation(self, lidar_measurements: NDArray[np.float32], imu_measurements: NDArray[np.float32]) -> NDArray[np.float32]:
         # measurements shape: (num_rays, 5) -> [distance, angle, hit, x, y]
-        distances = np.clip(lidar_measurements[:, 0], 0, self.max_distance) / self.max_distance
+        distances = np.clip(lidar_measurements[:, 0], 0, self.max_distance, dtype=np.float32) / self.max_distance
         hits: NDArray[np.float32] = lidar_measurements[:, 2]
-        obs_2d_normalized = np.stack((distances, hits), axis=1)
+        lidar_normalized = np.stack((distances, hits), axis=0)
 
-        # Normalize accelerations
-        lin_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[:2], -self.a_max, self.a_max) / self.a_max
-        ang_acc_normalized: NDArray[np.float32] = np.clip(imu_measurements[2], -self.alpha_max, self.alpha_max) / self.alpha_max
-        acceleration_normalized = np.concatenate((lin_acc_normalized, np.array([ang_acc_normalized], dtype=np.float32)), axis=0)
+        imu_normalized: NDArray[np.float32] = np.clip(imu_measurements, -self.a_max, self.a_max, dtype=np.float32) / self.a_max
 
-        return np.concatenate((obs_2d_normalized.ravel(), acceleration_normalized), axis=0)
+        return np.concatenate((lidar_normalized.ravel(), imu_normalized), axis=0)
 
 
     def _calculate_reward(self) -> float:
@@ -194,14 +184,24 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.clock.tick(self.metadata["render_fps"])
         
         
-    def _generate_info(self) -> dict[str, Any]:
-        return {
+    def _generate_info(self, 
+                       action: NDArray[np.float32], 
+                       observation: NDArray[np.float32], 
+                       reward: float, 
+                       lidar_measurements: NDArray[np.float32], 
+                       imu_measurements: NDArray[np.float32]) -> dict[str, Any]:
+        return {    
+            "step_count":  self.step_count,
+            "action": action,
+            "observation": observation,
+            "reward": reward,
             "coverage": self.coverage_grid.coverage(),
             "coverage_percentage": self.coverage_grid.coverage_percentage(),
-            "agent_position": self.agent.position,
-            "agent_angle": self.agent.angle,
-            "agent_velocity": self.agent.velocity,
-            "agent_omega": self.agent.omega
+            "agent_pose": self.agent.get_pose(),
+            "agent_local_velocity": self.agent.get_local_velocity(),
+            "lidar_measurements": lidar_measurements,
+            "imu_measurements": imu_measurements,
+            "environment_name": self.environment.name,
         }
 
 
