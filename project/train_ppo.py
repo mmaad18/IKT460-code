@@ -11,7 +11,7 @@ from stable_baselines3.common.monitor import Monitor
 import unicycle_env  # makes sure env is registered
 
 # Create log directory
-log_dir = "logs/"
+log_dir = "output/logs/"
 os.makedirs(log_dir, exist_ok=True)
 
 # Create vectorized env (for faster PPO training)

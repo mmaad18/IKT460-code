@@ -1,3 +1,4 @@
+import uuid
 from itertools import count
 
 import numpy as np
@@ -11,12 +12,12 @@ import torch
 
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
-from project.utils import plot_statistics, coverage_stagnated
+from project.utils import plot_statistics, coverage_stagnated, save_metadata_json, save_episode_data
 from unicycle_env.wrappers import DiscreteActions  # pyright: ignore [reportMissingTypeStubs]
 
 
 def main() -> None:
-    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")
+    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array")
     env = DiscreteActions(cont_env, action_mapping)
     unwrapped_env = env.unwrapped
     env_count = unwrapped_env.get_environment_count()
@@ -40,6 +41,10 @@ def main() -> None:
         batch_size=128,
         gamma=0.99
     )
+    
+    dqn_metadata = dqn_agent.get_metadata()
+    run_id = "run_" + str(uuid.uuid4())
+    save_metadata_json(dqn_metadata, run_id)
 
     TAU = 0.005
     episode_durations = []
@@ -54,15 +59,19 @@ def main() -> None:
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
 
         coverage_history = []
+        step_infos = []
 
         for t in count():
             action = dqn_agent.select_action(env, state, step_count)
             step_count += 1
-            observation, reward, terminated, truncated, _ = env.step(action.item())
-            # TODO: Fix coverage history
-            coverage_history.append(-1)
+            observation, reward, terminated, truncated, info = env.step(action.item())
+            
+            step_infos.append(info)
+            
+            coverage = info['coverage']
+            coverage_history.append(coverage)
             reward = torch.tensor([reward], device=device)
-            done = terminated or truncated or t >= episode_max_length or coverage_stagnated(coverage_history, 2)
+            done = terminated or truncated or t >= episode_max_length or coverage_stagnated(coverage_history, 3)
 
             if terminated:
                 next_state = None
@@ -86,6 +95,9 @@ def main() -> None:
                 episode_durations.append(t + 1)
                 episode_rewards.append(reward.item())
                 break
+
+        if i_episode % 10 == 0:
+            save_episode_data(step_infos, i_episode, run_id)
 
         if i_episode % 100 == 0:
             print(f"Episode {i_episode}, average reward: {np.mean(episode_rewards[-100:]):.2f}, "

@@ -129,6 +129,21 @@ class DQN(nn.Module):
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         self.optimizer.step()
+        
+        
+    def get_metadata(self) -> Mapping[str, Any]:
+        return {
+            "device": str(self.device),
+            "input_dim": self.policy_net[0].in_features,
+            "output_dim": self.policy_net[-1].out_features,
+            "learning_rate": self.learning_rate,
+            "memory_capacity": self.memory_capacity,
+            "eps_start": self.eps_start,
+            "eps_end": self.eps_end,
+            "eps_decay": self.eps_decay,
+            "batch_size": self.batch_size,
+            "gamma": self.gamma
+        }
 
 
 

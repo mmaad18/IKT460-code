@@ -1,3 +1,4 @@
+import time
 from typing import Optional, Any
 
 import gymnasium as gym
@@ -22,7 +23,6 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.render_mode = render_mode
         self.clock = None
         self.window = None
-        self.step_count = 0
 
         # Constants
         self.num_rays = 60
@@ -72,6 +72,9 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.v_reward = 10.0 / self.v_max
         self.coverage_reward = 500.0
 
+        self.step_count = 0
+        self.start = time.perf_counter()
+
 
     def step(self, action: NDArray[np.float32]) -> tuple[NDArray[np.float32], float, bool, bool, dict[str, Any]]:
         self.step_count += 1
@@ -100,6 +103,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
         super().reset(seed=seed)
         self.step_count = 0
+        self.start = time.perf_counter()
 
         self.Imu.reset()
         self.agent.reset()
@@ -192,6 +196,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
                        imu_measurements: NDArray[np.float32]) -> dict[str, Any]:
         return {    
             "step_count":  self.step_count,
+            "elapsed_time": time.perf_counter() - self.start,
             "action": action,
             "observation": observation,
             "reward": reward,
