@@ -67,10 +67,10 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         # Rewards
         self.time_penalty = -1.0 / self.dt
         self.omega_penalty = -0.5 / self.omega_max
-        self.collision_penalty = -100.0
+        self.collision_penalty = -1000.0
 
         self.v_reward = 10.0 / self.v_max
-        self.coverage_reward = 500.0
+        self.coverage_reward = 100.0
 
         self.step_count = 0
         self.start = time.perf_counter()
@@ -156,7 +156,8 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.prev_coverage = current
 
         v, _, omega = self.agent.get_local_velocity()
-        reward = self.time_penalty + self.coverage_reward * delta + self.v_reward * v + self.omega_penalty * abs(omega)
+        #reward = self.time_penalty + self.coverage_reward * delta + self.v_reward * v + self.omega_penalty * abs(omega)
+        reward = self.time_penalty + self.coverage_reward * delta
 
         if self._check_collision():
             reward += self.collision_penalty

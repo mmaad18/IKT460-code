@@ -52,6 +52,12 @@ def load_device() -> str:
     )
 
 
+def logs_path(run_id: str, base_path: str = "project/output/logs") -> Path:
+    run_folder = Path(base_path) / run_id
+    run_folder.mkdir(parents=True, exist_ok=True)
+    return run_folder
+
+
 def moving_average(data: list[float], window_size=10) -> np.ndarray:
     return np.convolve(data, np.ones(window_size)/window_size, mode='same')
 
@@ -84,19 +90,15 @@ def plot_statistics(episode_rewards: list[float], episode_durations: list[float]
     plt.close()
 
 
-def save_episode_data(step_infos: list[dict[str, Any]], episode: int, run_id: str, base_path: str = "project/output/logs") -> None:
-    run_folder = Path(base_path) / run_id
-    run_folder.mkdir(parents=True, exist_ok=True)
-
-    save_path = run_folder / f"episode_{episode}_data.npz"
+def save_episode_data(step_infos: list[dict[str, Any]], episode: int, run_id: str) -> None:
+    save_path = logs_path(run_id) / f"episode_{episode}_data.npz"
     np.savez(save_path, data=step_infos)
 
-    print(f"Run data saved to: {run_folder}")
+    print(f"Episode data saved to: {save_path}")
 
 
-def load_episode_data(episode: int, run_id: str, base_path: str = "project/output/logs") -> list[dict]:
-    run_folder = Path(base_path) / run_id
-    file_path = run_folder / f"episode_{episode}_data.npz"
+def load_episode_data(episode: int, run_id: str) -> list[dict]:
+    file_path = logs_path(run_id) / f"episode_{episode}_data.npz"
 
     loaded = np.load(file_path, allow_pickle=True)
     step_infos = loaded["data"]
@@ -104,8 +106,8 @@ def load_episode_data(episode: int, run_id: str, base_path: str = "project/outpu
     return list(step_infos)
 
 
-def save_metadata_json(metadata: Mapping[str, Any], run_id: str, base_path: str = "project/output/logs") -> None:
-    metadata_path = Path(base_path) / run_id / "metadata.json"
+def save_metadata_json(metadata: Mapping[str, Any], run_id: str) -> None:
+    metadata_path = logs_path(run_id) / "metadata.json"
 
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -113,6 +115,17 @@ def save_metadata_json(metadata: Mapping[str, Any], run_id: str, base_path: str 
         json.dump(metadata, f, indent=4)
         
     print(f"Metadata saved to: {metadata_path}")
+    
+    
+def save_commentary(comment: str, run_id: str) -> None:
+    comment_path = logs_path(run_id) / "comment.md"
+
+    comment_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with open(comment_path, 'w') as f:
+        f.write(comment)
+        
+    print(f"Comment saved to: {comment_path}")
 
 
 
