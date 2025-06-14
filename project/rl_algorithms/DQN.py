@@ -12,13 +12,13 @@ from unicycle_env.wrappers import DiscreteActions
 
 action_mapping = [
     [250.0, 0.0],  # Forward
-    [-50.0, 0.0],  # Backward
-    [0.0, 5.0],  # Turn right
-    [0.0, -5.0],  # Turn left
-    [250.0, 5.0],  # Forward right
-    [250.0, -5.0],  # Forward left
-    [-50.0, 5.0],  # Backward right
-    [-50.0, -5.0],  # Backward left
+    [-500.0, 0.0],  # Backward
+    [0.0, 1000.0],  # Turn right
+    [0.0, -1000.0],  # Turn left
+    [250.0, 1000.0],  # Forward right
+    [250.0, -1000.0],  # Forward left
+    [-500.0, 1000.0],  # Backward right
+    [-500.0, -1000.0],  # Backward left
 ]
 
 

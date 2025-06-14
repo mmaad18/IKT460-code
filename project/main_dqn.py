@@ -33,7 +33,7 @@ def main() -> None:
         gamma=0.99
     )
     
-    run_id = "run_4d2295fb-6dea-405d-877e-32b13b613868"
+    run_id = "run_5c9343a8-6989-4007-932d-c1b644c8acfd"
     dqn_agent.update_networks(torch.load(logs_path(run_id) / f"dqn_checkpoint.pth", map_location=device))
     dqn_agent.policy_net.eval()
     dqn_agent.target_net.eval()

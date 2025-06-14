@@ -12,13 +12,12 @@ import torch
 
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
-from project.utils import plot_statistics, coverage_stagnated, save_metadata_json, save_episode_data, logs_path, \
-    save_commentary
+from project.utils import plot_statistics, coverage_stagnated, save_metadata_json, save_episode_data, logs_path, save_commentary
 from unicycle_env.wrappers import DiscreteActions  # pyright: ignore [reportMissingTypeStubs]
 
 
 def main() -> None:
-    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="human")
+    cont_env = gym.make("unicycle_env/UniCycleBasicEnv-v0", render_mode="rgb_array")
     env = DiscreteActions(cont_env, action_mapping)
     unwrapped_env = env.unwrapped
     env_count = unwrapped_env.get_environment_count()
@@ -48,21 +47,21 @@ def main() -> None:
     save_metadata_json(dqn_metadata, run_id)
     
     save_commentary("""
-    # Comments
-    
-    ### Reward function
-    self.time_penalty = -1.0 / self.dt
-    self.coverage_reward = 100.0
-    delta = current - self.prev_coverage
-    
-    R = time_penalty + coverage_reward * delta
+# Comments
+
+### Reward function
+time_penalty = -1.0 / dt
+coverage_reward = 100.0
+delta = current - prev_coverage
+
+R = time_penalty + coverage_reward * delta
     """, run_id)
 
     TAU = 0.005
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 2000
+    num_episodes = 20000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
