@@ -40,7 +40,7 @@ def main() -> None:
     
     obs, info = env.reset()
     
-    #unwrapped_env.select_environment(2)
+    unwrapped_env.select_environment(9)
     
     for _ in range(20000):
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0)

@@ -67,10 +67,10 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
         # Rewards
         self.reward_coefficients = np.array([
-            -0.01 / self.dt,  # time
-            -0.5 / self.omega_max,  # omega
+            -0.005 / self.dt,  # time
+            -0.25 / self.omega_max,  # omega
             -1000.0,  # collision
-            10.0 / self.v_max,  # velocity
+            1.0 / self.v_max,  # velocity
             100.0,  # coverage
         ], dtype=np.float32)
 

@@ -1,3 +1,4 @@
+import time
 import uuid
 from itertools import count
 
@@ -47,15 +48,20 @@ def main() -> None:
     run_id = "run_" + str(uuid.uuid4())
     save_metadata_json(dqn_metadata, run_id)
     
-    save_commentary("""
+    run_time = time.time()
+    
+    save_commentary(f"""
 # Comments
 
+### Time of run
+{run_time}
+
 ### Reward function
-reward_coefficients = np.array([
-            -0.01 / dt,  # time
-            -0.5 / omega_max,  # omega
+self.reward_coefficients = np.array([
+            -0.005 / self.dt,  # time
+            -0.25 / self.omega_max,  # omega
             -1000.0,  # collision
-            10.0 / v_max,  # velocity
+            1.0 / self.v_max,  # velocity
             100.0,  # coverage
         ], dtype=np.float32)
 

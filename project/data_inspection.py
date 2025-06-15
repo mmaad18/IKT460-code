@@ -210,7 +210,7 @@ def plot_reward_components(episode_data: dict[int, list[dict]]) -> None:
 
 
 def main() -> None:
-    episode_data = load_all_episode_data("project/output/logs/run_4942b200-f4fd-42ee-a240-7e09bba8079d")
+    episode_data = load_all_episode_data("project/output/logs/run_29a59fc0-ff9e-42c1-82ed-63f02f11da28")
     df = episode_data_to_dataframe(episode_data)
     
     # Reward 
