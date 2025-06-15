@@ -21,6 +21,7 @@ def main() -> None:
     env = DiscreteActions(cont_env, action_mapping)
     unwrapped_env = env.unwrapped
     env_count = unwrapped_env.get_environment_count()
+    unwrapped_env.select_environment(9)
 
     state_0, info = env.reset()
     device = torch.device(
@@ -50,23 +51,34 @@ def main() -> None:
 # Comments
 
 ### Reward function
-time_penalty = -1.0 / dt
-coverage_reward = 100.0
-delta = current - prev_coverage
+reward_coefficients = np.array([
+            -0.01 / dt,  # time
+            -0.5 / omega_max,  # omega
+            -1000.0,  # collision
+            10.0 / v_max,  # velocity
+            100.0,  # coverage
+        ], dtype=np.float32)
 
-R = time_penalty + coverage_reward * delta
+features = np.array([
+            1.0,  # time
+            abs(omega),  # omega
+            1.0 if _check_collision() else 0.0,  # collision
+            v,  # velocity
+            delta,  # coverage
+        ], dtype=np.float32)
+        
+R = np.dot(reward_coefficients, features)
     """, run_id)
 
     TAU = 0.005
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 20000
+    num_episodes = 2000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
         #unwrapped_env.select_environment(np.random.randint(0, env_count))
-        #unwrapped_env.select_environment(3)
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
 

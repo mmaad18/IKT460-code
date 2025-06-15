@@ -6,6 +6,7 @@ import numpy as np
 import pygame
 from gymnasium import spaces
 from pathlib import Path
+
 from tqdm import tqdm
 from numpy.typing import NDArray
 
@@ -65,12 +66,13 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         self.prev_coverage = 0
 
         # Rewards
-        self.time_penalty = -1.0 / self.dt
-        self.omega_penalty = -0.5 / self.omega_max
-        self.collision_penalty = -1000.0
-
-        self.v_reward = 10.0 / self.v_max
-        self.coverage_reward = 100.0
+        self.reward_coefficients = np.array([
+            -0.01 / self.dt,  # time
+            -0.5 / self.omega_max,  # omega
+            -1000.0,  # collision
+            10.0 / self.v_max,  # velocity
+            100.0,  # coverage
+        ], dtype=np.float32)
 
         self.step_count = 0
         self.start = time.perf_counter()
@@ -91,13 +93,14 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         # Reward
         self.coverage_grid.visited(self.agent.get_sweepers()[0])
         self.coverage_grid.visited(self.agent.get_sweepers()[1])
-        reward = self._calculate_reward()
+        reward_components = self._calculate_reward_components()
+        reward = np.sum(reward_components)
         terminated = self._check_collision()
 
         if self.render_mode == "human":
             self._render_frame(lidar_measurements)
 
-        return obs_flat, reward, terminated, False, self._generate_info(action, obs_flat, reward, lidar_measurements, imu_measurements)
+        return obs_flat, reward, terminated, False, self._generate_info(action, obs_flat, reward, reward_components, lidar_measurements, imu_measurements)
 
 
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
@@ -129,11 +132,16 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         maps_folder = Path(base_folder) / "maps"
         start_positions_folder = Path(base_folder) / "start_positions"
 
-        for map_file in tqdm(sorted(maps_folder.glob("map_*.png")), desc="Loading maps"):
+        map_files = sorted(
+            maps_folder.glob("map_*.png"),
+            key=lambda x: int(x.stem.split('_')[1])
+        )
+
+        for map_file in tqdm(map_files, desc="Loading maps"):
             map_filename = map_file.stem
             start_positions_path = start_positions_folder / f"{map_filename}.npy"
 
-            env = LidarEnvironment(str(map_file), str(start_positions_path), self.map_dimensions)
+            env = LidarEnvironment(map_file, start_positions_path, self.map_dimensions)
             environments.append(env)
 
         return environments
@@ -150,19 +158,20 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         return np.concatenate((lidar_normalized.ravel(), imu_normalized), axis=0)
 
 
-    def _calculate_reward(self) -> float:
+    def _calculate_reward_components(self) -> NDArray[np.float32]:
         current = self.coverage_grid.coverage()
         delta = current - self.prev_coverage
         self.prev_coverage = current
-
         v, _, omega = self.agent.get_local_velocity()
-        #reward = self.time_penalty + self.coverage_reward * delta + self.v_reward * v + self.omega_penalty * abs(omega)
-        reward = self.time_penalty + self.coverage_reward * delta
-
-        if self._check_collision():
-            reward += self.collision_penalty
-
-        return reward
+        features = np.array([
+            1.0,  # time
+            abs(omega),  # omega
+            1.0 if self._check_collision() else 0.0,  # collision
+            v,  # velocity
+            delta,  # coverage
+        ], dtype=np.float32)
+        
+        return features * self.reward_coefficients
 
 
     def _check_collision(self) -> bool:
@@ -190,17 +199,19 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         
         
     def _generate_info(self, 
-                       action: NDArray[np.float32], 
-                       observation: NDArray[np.float32], 
-                       reward: float, 
-                       lidar_measurements: NDArray[np.float32], 
-                       imu_measurements: NDArray[np.float32]) -> dict[str, Any]:
+                    action: NDArray[np.float32],
+                    observation: NDArray[np.float32],
+                    reward: float,
+                    reward_components: NDArray[np.float32],
+                    lidar_measurements: NDArray[np.float32],
+                    imu_measurements: NDArray[np.float32]) -> dict[str, Any]:
         return {    
             "step_count":  self.step_count,
             "elapsed_time": time.perf_counter() - self.start,
             "action": action,
             "observation": observation,
             "reward": reward,
+            "reward_components": reward_components,
             "coverage": self.coverage_grid.coverage(),
             "coverage_percentage": self.coverage_grid.coverage_percentage(),
             "agent_pose": self.agent.get_pose(),

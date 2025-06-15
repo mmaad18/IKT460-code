@@ -1,3 +1,5 @@
+from time import sleep
+
 import numpy as np
 import pygame
 
@@ -9,6 +11,7 @@ env_count = env.get_environment_count()
 
 a = 0.0
 alpha = 0.0
+map_index = 1
 
 running = True
 while running:
@@ -44,8 +47,11 @@ while running:
 
     # o => select a random environment
     if keys[pygame.K_o]:
-        env.select_environment(np.random.randint(0, env_count))
+        #env.select_environment(np.random.randint(0, env_count))
+        map_index = (map_index + 1) % env_count
+        env.select_environment(map_index)
         env.reset()
+        sleep(0.25)
 
     action = np.array([a, alpha], dtype=np.float32)
     obs, reward, terminated, truncated, info = env.step(action)

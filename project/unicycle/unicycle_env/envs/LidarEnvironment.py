@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pygame
 from pygame.color import Color
@@ -11,11 +13,11 @@ from unicycle_env.envs.StartPositionManager import StartPositionManager  # pyrig
 
 
 class LidarEnvironment:
-    def __init__(self, map_image_path: str, start_positions_path: str, map_dimensions: tuple[int, int], map_window_name: str="LIDAR SIM") -> None:
+    def __init__(self, map_image_path: Path, start_positions_path: Path, map_dimensions: tuple[int, int], map_window_name: str="LIDAR SIM") -> None:
         pygame.init()
         pygame.display.set_caption(map_window_name)
 
-        self.name = map_image_path.split("\\")[-1].split(".")[0]
+        self.name = map_image_path.stem
         self.start_position_manager = StartPositionManager(start_positions_path)
 
         self.surface_load = pygame.image.load(map_image_path)
