@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import uuid
 from itertools import count
@@ -48,7 +49,7 @@ def main() -> None:
     run_id = "run_" + str(uuid.uuid4())
     save_metadata_json(dqn_metadata, run_id)
     
-    run_time = time.time()
+    run_time = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d, %H:%M:%S")
     
     save_commentary(f"""
 # Comments
@@ -62,7 +63,7 @@ self.reward_coefficients = np.array([
             -0.25 / self.omega_max,  # omega
             -1000.0,  # collision
             1.0 / self.v_max,  # velocity
-            100.0,  # coverage
+            50.0,  # coverage
         ], dtype=np.float32)
 
 features = np.array([
@@ -80,7 +81,7 @@ R = np.dot(reward_coefficients, features)
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 2000
+    num_episodes = 10000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
@@ -130,8 +131,10 @@ R = np.dot(reward_coefficients, features)
             print(f"Episode {i_episode}, average reward: {np.mean(episode_rewards[-100:]):.2f}, "
                   f"average duration: {np.mean(episode_durations[-100:]):.2f}")
 
-            plot_statistics(episode_rewards, episode_durations, "DQN")
             save_episode_data(step_infos, i_episode, run_id)
+            
+        if i_episode % 1000 == 0 and i_episode > 0:
+            torch.save(dqn_agent.policy_net.state_dict(), logs_path(run_id) / f"dqn_checkpoint_{i_episode}.pth")
 
 
     torch.save(dqn_agent.policy_net.state_dict(), logs_path(run_id) / f"dqn_checkpoint.pth")

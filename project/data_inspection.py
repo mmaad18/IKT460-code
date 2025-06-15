@@ -149,50 +149,51 @@ def plot_episode_metrics(episode_data: dict[int, list[dict]]) -> None:
     fig.show()
 
 
-def plot_reward_components(episode_data: dict[int, list[dict]]) -> None:
+def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
     df = episode_data_to_dataframe(episode_data)
-    df[["time", "omega", "collision", "velocity", "coverage"]] = df["reward_components"].apply(pd.Series)
+    episode_df = df[df["episode"] == episode_idx].copy()
+    episode_df[["time", "omega", "collision", "velocity", "coverage"]] = episode_df["reward_components"].apply(pd.Series)
 
     fig = make_subplots(
         rows=5, cols=1,
         subplot_titles=('Time Penalty per Step', 'Omega Penalty per Step', 'Collision Penalty per Step', 'Velocity Reward per Step', 'Coverage Reward per Step'),
-        vertical_spacing=0.08
+        vertical_spacing=0.04
     )
 
     fig.add_trace(
-        go.Scatter(x=df['step_count'], y=df['time'],
+        go.Scatter(x=episode_df['step_count'], y=episode_df['time'],
                    mode='markers', name='Time Penalty', line=dict(color='blue')),
         row=1, col=1
     )
 
     fig.add_trace(
-        go.Scatter(x=df['step_count'],  y=df['omega'],
-                   mode='markers', name='Angular Velocity Penalty', line=dict(color='orange')),
+        go.Scatter(x=episode_df['step_count'],  y=episode_df['omega'],
+                   mode='markers', name='Omega Penalty', line=dict(color='orange')),
         row=2, col=1
     )
 
     fig.add_trace(
-        go.Scatter(x=df['step_count'],  y=df['collision'],
+        go.Scatter(x=episode_df['step_count'],  y=episode_df['collision'],
                    mode='markers', name='Collision Penalty', line=dict(color='red')),
         row=3, col=1
     )
 
     fig.add_trace(
-        go.Scatter(x=df['step_count'],  y=df['velocity'],
+        go.Scatter(x=episode_df['step_count'],  y=episode_df['velocity'],
                    mode='markers', name='Velocity Reward', line=dict(color='green')),
         row=4, col=1
     )
 
     fig.add_trace(
-        go.Scatter(x=df['step_count'],  y=df['coverage'],
+        go.Scatter(x=episode_df['step_count'],  y=episode_df['coverage'],
                    mode='markers', name='Coverage Reward', line=dict(color='purple')),
         row=5, col=1
     )
 
     # Update layout
     fig.update_layout(
-        height=800,
-        title_text="Reward Components per Step",
+        height=1000,
+        title_text=f"Reward Components per Step, Episode {episode_idx}",
         showlegend=False
     )
 
@@ -210,7 +211,7 @@ def plot_reward_components(episode_data: dict[int, list[dict]]) -> None:
 
 
 def main() -> None:
-    episode_data = load_all_episode_data("project/output/logs/run_29a59fc0-ff9e-42c1-82ed-63f02f11da28")
+    episode_data = load_all_episode_data("project/output/logs/run_d8a6bd1c-9137-4ef6-a7d5-af2285a88800")
     df = episode_data_to_dataframe(episode_data)
     
     # Reward 
@@ -232,8 +233,8 @@ def main() -> None:
     
     #fig.show()
     
-    plot_episode_metrics(episode_data)
-    #plot_reward_components(episode_data)
+    #plot_episode_metrics(episode_data)
+    plot_reward_components(episode_data, 1800)
 
 
 main()

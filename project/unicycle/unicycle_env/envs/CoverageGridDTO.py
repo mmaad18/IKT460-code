@@ -19,15 +19,13 @@ class CoverageGridDTO:
         self.grid = np.zeros((w // self.resolution, h // self.resolution), dtype=bool)
 
 
-    def visited(self, position: tuple[float, float]) -> bool:
+    def mark_visited(self, position: tuple[float, float]) -> None:
         x, y = position
         grid_x = int(x // self.resolution)
         grid_y = int(y // self.resolution)
 
         if not self.grid[grid_x, grid_y]:
             self.grid[grid_x, grid_y] = True
-
-        return self.grid[grid_x, grid_y]
 
 
     def coverage(self) -> int:

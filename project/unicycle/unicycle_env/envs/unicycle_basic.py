@@ -46,13 +46,13 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
 
         # Action and observation space
         self.action_space = spaces.Box(
-            low=np.array([-500.0, -1000.0]),
-            high=np.array([250.0, 1000.0]),
+            low=np.array([-500.0, -1000.0], dtype=np.float32),
+            high=np.array([250.0, 1000.0], dtype=np.float32),
             shape=(2,), dtype=np.float32
         )
         self.observation_space = spaces.Box(
-            low=0.0,
-            high=(self.max_distance+1.0),
+            low=-1.0,
+            high=1.0,
             shape=(self.num_rays * 2 + 3,), dtype=np.float32
         )
 
@@ -71,7 +71,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
             -0.25 / self.omega_max,  # omega
             -1000.0,  # collision
             1.0 / self.v_max,  # velocity
-            100.0,  # coverage
+            50.0,  # coverage
         ], dtype=np.float32)
 
         self.step_count = 0
@@ -91,8 +91,8 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         obs_flat = self._get_observation(lidar_measurements, imu_measurements)
 
         # Reward
-        self.coverage_grid.visited(self.agent.get_sweepers()[0])
-        self.coverage_grid.visited(self.agent.get_sweepers()[1])
+        self.coverage_grid.mark_visited(self.agent.get_sweepers()[0])
+        self.coverage_grid.mark_visited(self.agent.get_sweepers()[1])
         reward_components = self._calculate_reward_components()
         reward = np.sum(reward_components)
         terminated = self._check_collision()
@@ -106,6 +106,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
     def reset(self, *, seed: Optional[int]=None, options: Optional[dict[str, Any]]=None) -> tuple[NDArray[np.float32], dict[str, Any]]:
         super().reset(seed=seed)
         self.step_count = 0
+        self.prev_coverage = 0
         self.start = time.perf_counter()
 
         self.Imu.reset()
@@ -163,6 +164,7 @@ class UniCycleBasicEnv(gym.Env[NDArray[np.float32], NDArray[np.float32]]):
         delta = current - self.prev_coverage
         self.prev_coverage = current
         v, _, omega = self.agent.get_local_velocity()
+        
         features = np.array([
             1.0,  # time
             abs(omega),  # omega
