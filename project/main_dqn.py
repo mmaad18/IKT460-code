@@ -1,4 +1,5 @@
 import gymnasium as gym
+import numpy as np
 import torch
 import unicycle_env
 
@@ -33,14 +34,14 @@ def main() -> None:
         gamma=0.99
     )
     
-    run_id = "run_2a64650f-ab1a-4c1f-9861-f2f87288c572"
+    run_id = "run_250617_013549"
     dqn_agent.update_networks(torch.load(logs_path(run_id) / f"dqn_checkpoint.pth", map_location=device))
     dqn_agent.policy_net.eval()
     dqn_agent.target_net.eval()
     
     obs, info = env.reset()
     
-    unwrapped_env.select_environment(2)
+    #unwrapped_env.select_environment(9)
     
     for _ in range(20000):
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0)
@@ -51,7 +52,7 @@ def main() -> None:
         obs, reward, terminated, truncated, info = env.step(action)
         
         if terminated or truncated:
-            #unwrapped_env.select_environment(np.random.randint(0, env_count))
+            unwrapped_env.select_environment(np.random.randint(0, env_count))
             obs, info = env.reset()
 
 

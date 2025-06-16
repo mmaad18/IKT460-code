@@ -62,7 +62,6 @@ def plot_episode_metrics(episode_data: dict[int, list[dict]]) -> None:
 
     metrics_df = pd.DataFrame(episode_metrics)
 
-    # Create subplots
     fig = make_subplots(
         rows=8, cols=1,
         subplot_titles=('Total Reward per Episode', 'Final Coverage per Episode', 'Step Count per Episode', 'Total Time Penalty per Episode',
@@ -70,63 +69,54 @@ def plot_episode_metrics(episode_data: dict[int, list[dict]]) -> None:
         vertical_spacing=0.04
     )
 
-    # Plot total reward
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_reward'],
                    mode='markers', name='Total Reward', line=dict(color='blue')),
         row=1, col=1
     )
 
-    # Plot final coverage
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['final_coverage'],
                    mode='markers', name='Final Coverage', line=dict(color='green')),
         row=2, col=1
     )
 
-    # Plot step count
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['step_count'],
                    mode='markers', name='Step Count', line=dict(color='red')),
         row=3, col=1
     )
 
-    # Plot total time penalty
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_time_penalty'],
                    mode='markers', name='Total Time Penalty', line=dict(color='orange')),
         row=4, col=1
     )
 
-    # Plot total omega penalty
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_omega_penalty'],
                    mode='markers', name='Total Angular Velocity Penalty', line=dict(color='purple')),
         row=5, col=1
     )
 
-    # Plot total collision penalty
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_collision_penalty'],
                    mode='markers', name='Total Collision Penalty', line=dict(color='black')),
         row=6, col=1
     )
 
-    # Plot total velocity reward
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_velocity_reward'],
                    mode='markers', name='Total Velocity Reward', line=dict(color='cyan')),
         row=7, col=1
     )
 
-    # Plot total coverage reward
     fig.add_trace(
         go.Scatter(x=metrics_df['episode'], y=metrics_df['total_coverage_reward'],
                    mode='markers', name='Total Coverage Reward', line=dict(color='magenta')),
         row=8, col=1
     )
 
-    # Update layout
     fig.update_layout(
         height=1600,
         title_text="Episode Performance Metrics",
@@ -153,7 +143,7 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     df = episode_data_to_dataframe(episode_data)
     episode_df = df[df["episode"] == episode_idx].copy()
     episode_df[["time", "omega", "collision", "velocity", "coverage"]] = episode_df["reward_components"].apply(pd.Series)
-    episode_df["max_q"] = episode_df["q_values"].apply(lambda q: max(q[0]) if isinstance(q, list) else None)
+    episode_df["max_q"] = episode_df["q_values"].apply(lambda q: max(q) if isinstance(q, list) else None)
 
     fig = make_subplots(
         rows=6, cols=1,
@@ -197,7 +187,6 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
         row=6, col=1
     )
 
-    # Update layout
     fig.update_layout(
         height=1200,
         title_text=f"Reward Components per Step, Episode {episode_idx}",
@@ -218,31 +207,75 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     fig.show()
 
 
+def plot_velocity(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
+    df = episode_data_to_dataframe(episode_data)
+    episode_df = df[df["episode"] == episode_idx].copy()
+    episode_df[["velocity_x", "velocity_y", "omega"]] = episode_df["agent_local_velocity"].apply(pd.Series)
+
+    fig = make_subplots(
+        rows=2, cols=1,
+        subplot_titles=('Velocity X per Step', 'Omega per Step'),
+        vertical_spacing=0.06
+    )
+
+    fig.add_trace(
+        go.Scatter(x=episode_df['step_count'], y=episode_df['velocity_x'],
+                   mode='markers', name='Velocity X', line=dict(color='blue')),
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go.Scatter(x=episode_df['step_count'], y=episode_df['omega'],
+                   mode='markers', name='Angular Velocity (Omega)', line=dict(color='red')),
+        row=2, col=1
+    )
+
+    fig.update_layout(
+        height=800,
+        title_text=f"Agent Velocities per Step, Episode {episode_idx}",
+        showlegend=False
+    )
+
+    # Update x-axis labels
+    fig.update_xaxes(title_text="Step Count", row=3, col=1)
+
+    # Update y-axis labels
+    fig.update_yaxes(title_text="Velocity X", row=1, col=1)
+    fig.update_yaxes(title_text="Omega", row=3, col=1)
+
+    fig.show()
+
+
+def plot_pose(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
+    df  = episode_data_to_dataframe(episode_data)
+    episode_df = df[df["episode"] == episode_idx].copy()
+    episode_df[["x", "y", "th"]] = episode_df["agent_pose"].apply(pd.Series)
+
+    fig = px.scatter(episode_df, x="x", y="y", color="step_count", color_continuous_scale=px.colors.sequential.Viridis)
+
+    fig.update_layout(
+        width=1200,
+        height=600,
+        title_text=f"Agent Pose per Step, Episode {episode_idx}",
+        showlegend=False,
+        xaxis=dict(title="X Position", range=[0, 1200]),
+        yaxis=dict(title="Y Position", range=[0, 600], scaleanchor="x", scaleratio=1)
+    )
+
+    fig.update_yaxes(autorange="reversed")
+
+    fig.show()
+
+
 def main() -> None:
-    episode_data = load_all_episode_data("project/output/logs/run_2a64650f-ab1a-4c1f-9861-f2f87288c572")
+    run_id = "run_250617_013549"    
+    episode_data = load_all_episode_data(f"project/output/logs/{run_id}")
     df = episode_data_to_dataframe(episode_data)
     
-    # Reward 
-    #fig = px.line(df, x="step_count", y="reward", color="episode", title="Reward per Step")
-    #fig.update_layout(legend=dict(title="Episode", itemsizing='constant'))
-    
-    # Coverage
-    #fig = px.line(df, x="step_count", y="coverage", color="episode", title="Coverage per Step")
-    #fig.update_layout(legend=dict(title="Episode", itemsizing='constant'))
-    
-    # Duration
-    #fig = px.line(df, x="step_count", y="elapsed_time", color="episode", title="Elapsed Time per Step")
-    #fig.update_layout(legend=dict(title="Episode", itemsizing='constant'))
-    
-    # Velocity
-    #df[["velocity_x", "velocity_y", "omega"]] = df["agent_local_velocity"].apply(pd.Series)
-    #fig = px.line(df, x="step_count", y="velocity_x", color="episode", title="Agent Velocity per Step")
-    #fig = px.line(df, x="step_count", y="omega", color="episode", title="Angular Velocity (Omega) per Step")
-    
-    #fig.show()
-    
-    #plot_episode_metrics(episode_data)
-    plot_reward_components(episode_data, 14300)
+    plot_episode_metrics(episode_data)
+    #plot_reward_components(episode_data, 7900)
+    #plot_velocity(episode_data, 14300)
+    #plot_pose(episode_data, 14300)
 
 
 main()

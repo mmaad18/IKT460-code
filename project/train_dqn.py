@@ -1,4 +1,3 @@
-import uuid
 from itertools import count
 
 import numpy as np
@@ -8,11 +7,13 @@ import unicycle_env
 
 import gymnasium as gym
 
+from datetime import datetime
+import time
 import torch
 
 from project.rl_algorithms.DQN import DQN, action_mapping
 from project.rl_algorithms.ReplayMemory import Transition
-from project.utils import plot_statistics, coverage_stagnated, save_metadata_json, save_episode_data, logs_path, save_commentary
+from project.utils import save_metadata_json, save_episode_data, logs_path, save_commentary
 from unicycle_env.wrappers import DiscreteActions  # pyright: ignore [reportMissingTypeStubs]
 
 
@@ -21,7 +22,7 @@ def main() -> None:
     env = DiscreteActions(cont_env, action_mapping)
     unwrapped_env = env.unwrapped
     env_count = unwrapped_env.get_environment_count()
-    unwrapped_env.select_environment(9)
+    #unwrapped_env.select_environment(9)
 
     state_0, info = env.reset()
     device = torch.device(
@@ -44,7 +45,8 @@ def main() -> None:
     )
     
     dqn_metadata = dqn_agent.get_metadata()
-    run_id = "run_" + str(uuid.uuid4())
+    run_time = datetime.fromtimestamp(time.time()).strftime("%y%m%d_%H%M%S")
+    run_id = "run_" + run_time
     save_metadata_json(dqn_metadata, run_id)
     
     save_commentary(run_id)
@@ -53,11 +55,11 @@ def main() -> None:
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 2000
+    num_episodes = 1000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
-        #unwrapped_env.select_environment(np.random.randint(0, env_count))
+        unwrapped_env.select_environment(np.random.randint(0, env_count))
         state, info = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
 
@@ -69,14 +71,14 @@ def main() -> None:
             step_count += 1
             observation, reward, terminated, truncated, info = env.step(action.item())
             
-            info['q_values'] = q_values.tolist() if q_values is not None else None
+            info['q_values'] = q_values.tolist()[0] if q_values is not None else None
             
             step_infos.append(info)
             
             coverage = info['coverage']
             coverage_history.append(coverage)
             reward = torch.tensor([reward], device=device)
-            done = terminated or truncated or t >= episode_max_length
+            done = terminated or truncated or t >= episode_max_length# or coverage_stagnated(coverage_history, limit=3)
 
             if terminated:
                 next_state = None
