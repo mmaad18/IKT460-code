@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -117,9 +118,36 @@ def save_metadata_json(metadata: Mapping[str, Any], run_id: str) -> None:
     print(f"Metadata saved to: {metadata_path}")
     
     
-def save_commentary(comment: str, run_id: str) -> None:
-    comment_path = logs_path(run_id) / "comment.md"
+def save_commentary(run_id: str) -> None:
+    run_time = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d, %H:%M:%S")
+    
+    comment = f"""
+# Comments
 
+### Time of run
+{run_time}
+
+### Reward function
+self.reward_coefficients = np.array([
+            -0.005 / self.dt,  # time
+            -0.25 / self.omega_max,  # omega
+            -1000.0,  # collision
+            1.0 / self.v_max,  # velocity
+            50.0,  # coverage
+        ], dtype=np.float32)
+
+features = np.array([
+            1.0,  # time
+            abs(omega),  # omega
+            1.0 if _check_collision() else 0.0,  # collision
+            v,  # velocity
+            delta,  # coverage
+        ], dtype=np.float32)
+        
+R = np.dot(reward_coefficients, features)
+    """
+    
+    comment_path = logs_path(run_id) / "comment.md"
     comment_path.parent.mkdir(parents=True, exist_ok=True)
 
     with open(comment_path, 'w') as f:

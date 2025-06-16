@@ -1,6 +1,6 @@
 import math
 import random
-from typing import Mapping, Any
+from typing import Mapping, Any, Optional
 
 import numpy as np
 import torch
@@ -81,15 +81,17 @@ class DQN(nn.Module):
         self.target_net.load_state_dict(state_dict)
 
 
-    def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> torch.Tensor:
+    def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
         sample = random.random()
         eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(-1.0 * step_count / self.eps_decay)
 
         if sample > eps_threshold:
             with torch.no_grad():
-                return self.policy_net(state).max(1).indices.view(1, 1)
+                q_values = self.policy_net(state)
+                action = q_values.max(1).indices.view(1, 1)
+                return action, q_values
         else:
-            return torch.tensor([[env.action_space.sample()]], device=self.device, dtype=torch.long)
+            return torch.tensor([[env.action_space.sample()]], device=self.device, dtype=torch.long), None
 
 
     def optimize_model(self) -> None:

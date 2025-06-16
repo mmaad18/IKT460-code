@@ -153,10 +153,11 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     df = episode_data_to_dataframe(episode_data)
     episode_df = df[df["episode"] == episode_idx].copy()
     episode_df[["time", "omega", "collision", "velocity", "coverage"]] = episode_df["reward_components"].apply(pd.Series)
+    episode_df["max_q"] = episode_df["q_values"].apply(lambda q: max(q[0]) if isinstance(q, list) else None)
 
     fig = make_subplots(
-        rows=5, cols=1,
-        subplot_titles=('Time Penalty per Step', 'Omega Penalty per Step', 'Collision Penalty per Step', 'Velocity Reward per Step', 'Coverage Reward per Step'),
+        rows=6, cols=1,
+        subplot_titles=('Time Penalty per Step', 'Omega Penalty per Step', 'Collision Penalty per Step', 'Velocity Reward per Step', 'Coverage Reward per Step', 'Q-Values per Step'),
         vertical_spacing=0.04
     )
 
@@ -190,15 +191,21 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
         row=5, col=1
     )
 
+    fig.add_trace(
+        go.Scatter(x=episode_df['step_count'], y=episode_df['max_q'],
+                   mode='markers', name='Max Q-Value', line=dict(color='black')),
+        row=6, col=1
+    )
+
     # Update layout
     fig.update_layout(
-        height=1000,
+        height=1200,
         title_text=f"Reward Components per Step, Episode {episode_idx}",
         showlegend=False
     )
 
     # Update x-axis labels
-    fig.update_xaxes(title_text="Step Count", row=5, col=1)
+    fig.update_xaxes(title_text="Step Count", row=6, col=1)
 
     # Update y-axis labels
     fig.update_yaxes(title_text="Time Penalty", row=1, col=1)
@@ -206,12 +213,13 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     fig.update_yaxes(title_text="Collision Penalty", row=3, col=1)
     fig.update_yaxes(title_text="Velocity Reward", row=4, col=1)
     fig.update_yaxes(title_text="Coverage Reward", row=5, col=1)
+    fig.update_yaxes(title_text="Q-Values", row=6, col=1)
 
     fig.show()
 
 
 def main() -> None:
-    episode_data = load_all_episode_data("project/output/logs/run_d8a6bd1c-9137-4ef6-a7d5-af2285a88800")
+    episode_data = load_all_episode_data("project/output/logs/run_2a64650f-ab1a-4c1f-9861-f2f87288c572")
     df = episode_data_to_dataframe(episode_data)
     
     # Reward 
@@ -234,7 +242,7 @@ def main() -> None:
     #fig.show()
     
     #plot_episode_metrics(episode_data)
-    plot_reward_components(episode_data, 1800)
+    plot_reward_components(episode_data, 14300)
 
 
 main()

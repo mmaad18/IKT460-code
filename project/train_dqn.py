@@ -1,5 +1,3 @@
-from datetime import datetime
-import time
 import uuid
 from itertools import count
 
@@ -49,39 +47,13 @@ def main() -> None:
     run_id = "run_" + str(uuid.uuid4())
     save_metadata_json(dqn_metadata, run_id)
     
-    run_time = datetime.fromtimestamp(time.time()).strftime("%Y-%m-%d, %H:%M:%S")
-    
-    save_commentary(f"""
-# Comments
-
-### Time of run
-{run_time}
-
-### Reward function
-self.reward_coefficients = np.array([
-            -0.005 / self.dt,  # time
-            -0.25 / self.omega_max,  # omega
-            -1000.0,  # collision
-            1.0 / self.v_max,  # velocity
-            50.0,  # coverage
-        ], dtype=np.float32)
-
-features = np.array([
-            1.0,  # time
-            abs(omega),  # omega
-            1.0 if _check_collision() else 0.0,  # collision
-            v,  # velocity
-            delta,  # coverage
-        ], dtype=np.float32)
-        
-R = np.dot(reward_coefficients, features)
-    """, run_id)
+    save_commentary(run_id)
 
     TAU = 0.005
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 10000
+    num_episodes = 2000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
@@ -93,16 +65,18 @@ R = np.dot(reward_coefficients, features)
         step_infos = []
 
         for t in count():
-            action = dqn_agent.select_action(env, state, step_count)
+            action, q_values = dqn_agent.select_action(env, state, step_count)
             step_count += 1
             observation, reward, terminated, truncated, info = env.step(action.item())
+            
+            info['q_values'] = q_values.tolist() if q_values is not None else None
             
             step_infos.append(info)
             
             coverage = info['coverage']
             coverage_history.append(coverage)
             reward = torch.tensor([reward], device=device)
-            done = terminated or truncated or t >= episode_max_length or coverage_stagnated(coverage_history, 3)
+            done = terminated or truncated or t >= episode_max_length
 
             if terminated:
                 next_state = None
