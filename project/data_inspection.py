@@ -143,10 +143,10 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     df = episode_data_to_dataframe(episode_data)
     episode_df = df[df["episode"] == episode_idx].copy()
     episode_df[["time", "omega", "collision", "velocity", "coverage"]] = episode_df["reward_components"].apply(pd.Series)
-    episode_df["max_q"] = episode_df["q_values"].apply(lambda q: max(q) if isinstance(q, list) else None)
+    map_name = episode_df["environment_name"].iloc[0]
 
     fig = make_subplots(
-        rows=6, cols=1,
+        rows=5, cols=1,
         subplot_titles=('Time Penalty per Step', 'Omega Penalty per Step', 'Collision Penalty per Step', 'Velocity Reward per Step', 'Coverage Reward per Step', 'Q-Values per Step'),
         vertical_spacing=0.04
     )
@@ -181,15 +181,9 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
         row=5, col=1
     )
 
-    fig.add_trace(
-        go.Scatter(x=episode_df['step_count'], y=episode_df['max_q'],
-                   mode='markers', name='Max Q-Value', line=dict(color='black')),
-        row=6, col=1
-    )
-
     fig.update_layout(
-        height=1200,
-        title_text=f"Reward Components per Step, Episode {episode_idx}",
+        height=1000,
+        title_text=f"Reward Components per Step, Map: {map_name}, Episode {episode_idx}",
         showlegend=False
     )
 
@@ -202,7 +196,6 @@ def plot_reward_components(episode_data: dict[int, list[dict]], episode_idx: int
     fig.update_yaxes(title_text="Collision Penalty", row=3, col=1)
     fig.update_yaxes(title_text="Velocity Reward", row=4, col=1)
     fig.update_yaxes(title_text="Coverage Reward", row=5, col=1)
-    fig.update_yaxes(title_text="Q-Values", row=6, col=1)
 
     fig.show()
 
@@ -211,6 +204,7 @@ def plot_velocity(episode_data: dict[int, list[dict]], episode_idx: int) -> None
     df = episode_data_to_dataframe(episode_data)
     episode_df = df[df["episode"] == episode_idx].copy()
     episode_df[["velocity_x", "velocity_y", "omega"]] = episode_df["agent_local_velocity"].apply(pd.Series)
+    map_name = episode_df["environment_name"].iloc[0]
 
     fig = make_subplots(
         rows=2, cols=1,
@@ -232,7 +226,7 @@ def plot_velocity(episode_data: dict[int, list[dict]], episode_idx: int) -> None
 
     fig.update_layout(
         height=800,
-        title_text=f"Agent Velocities per Step, Episode {episode_idx}",
+        title_text=f"Agent Velocities per Step, Map: {map_name}, Episode {episode_idx}",
         showlegend=False
     )
 
@@ -250,13 +244,14 @@ def plot_pose(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
     df  = episode_data_to_dataframe(episode_data)
     episode_df = df[df["episode"] == episode_idx].copy()
     episode_df[["x", "y", "th"]] = episode_df["agent_pose"].apply(pd.Series)
+    map_name = episode_df["environment_name"].iloc[0]
 
     fig = px.scatter(episode_df, x="x", y="y", color="step_count", color_continuous_scale=px.colors.sequential.Viridis)
 
     fig.update_layout(
         width=1200,
         height=600,
-        title_text=f"Agent Pose per Step, Episode {episode_idx}",
+        title_text=f"Agent Pose per Step, Map: {map_name}, Episode {episode_idx}",
         showlegend=False,
         xaxis=dict(title="X Position", range=[0, 1200]),
         yaxis=dict(title="Y Position", range=[0, 600], scaleanchor="x", scaleratio=1)
@@ -267,15 +262,42 @@ def plot_pose(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
     fig.show()
 
 
+def plot_q_values(episode_data: dict[int, list[dict]], episode_idx: int) -> None:
+    df = episode_data_to_dataframe(episode_data)
+    episode_df = df[df["episode"] == episode_idx].copy()
+
+    episode_df = episode_df[episode_df["q_values"].apply(lambda q: isinstance(q, list) and len(q) > 0)]
+    episode_df["max_q"] = episode_df["q_values"].apply(max)
+    episode_df["min_q"] = episode_df["q_values"].apply(min)
+    episode_df["mean_q"] = episode_df["q_values"].apply(lambda q: sum(q) / len(q))
+
+    map_name = episode_df["environment_name"].iloc[0]
+
+    fig = px.line(
+        episode_df,
+        x="step_count",
+        y=["min_q", "mean_q", "max_q"],
+        labels={"value": "Q-Value", "variable": "Q-Stat"},
+        title=f"Q-Values per Step, Map: {map_name}, Episode {episode_idx}",
+    )
+
+    fig.update_layout(height=600)
+    
+    fig.show()
+
+
 def main() -> None:
-    run_id = "run_250617_013549"    
+    run_id = "run_250617_141429"    
     episode_data = load_all_episode_data(f"project/output/logs/{run_id}")
     df = episode_data_to_dataframe(episode_data)
     
-    plot_episode_metrics(episode_data)
-    #plot_reward_components(episode_data, 7900)
-    #plot_velocity(episode_data, 14300)
-    #plot_pose(episode_data, 14300)
+    if False:
+        plot_episode_metrics(episode_data)
+    else:
+        plot_reward_components(episode_data, 8900)
+        plot_velocity(episode_data, 8900)
+        plot_pose(episode_data, 8900)
+        plot_q_values(episode_data, 8900)
 
 
 main()

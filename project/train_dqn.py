@@ -55,7 +55,7 @@ def main() -> None:
     episode_durations = []
     episode_rewards = []
     step_count = 0
-    num_episodes = 1000
+    num_episodes = 30000
     episode_max_length = 5000
 
     for i_episode in tqdm(range(num_episodes)):
@@ -67,11 +67,12 @@ def main() -> None:
         step_infos = []
 
         for t in count():
-            action, q_values = dqn_agent.select_action(env, state, step_count)
+            action, q_values, epsilon = dqn_agent.select_action(env, state, step_count)
             step_count += 1
             observation, reward, terminated, truncated, info = env.step(action.item())
             
             info['q_values'] = q_values.tolist()[0] if q_values is not None else None
+            info['epsilon'] = epsilon
             
             step_infos.append(info)
             

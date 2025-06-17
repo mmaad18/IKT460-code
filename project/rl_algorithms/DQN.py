@@ -15,8 +15,10 @@ action_mapping = [
     [-500.0, 0.0],  # Backward
     [0.0, 1000.0],  # Turn right
     [0.0, -1000.0],  # Turn left
-    [250.0, 1000.0],  # Forward right
-    [250.0, -1000.0],  # Forward left
+    [250.0, 1000.0],  # Forward sharp right
+    [250.0, 100.0],  # Forward right
+    [250.0, -1000.0],  # Forward sharp left
+    [250.0, -100.0],  # Forward left
     [-500.0, 1000.0],  # Backward right
     [-500.0, -1000.0],  # Backward left
 ]
@@ -81,7 +83,7 @@ class DQN(nn.Module):
         self.target_net.load_state_dict(state_dict)
 
 
-    def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> tuple[torch.Tensor, Optional[torch.Tensor]]:
+    def select_action(self, env: DiscreteActions, state: torch.Tensor, step_count: int) -> tuple[torch.Tensor, Optional[torch.Tensor], float]:
         sample = random.random()
         eps_threshold = self.eps_end + (self.eps_start - self.eps_end) * math.exp(-1.0 * step_count / self.eps_decay)
 
@@ -89,9 +91,9 @@ class DQN(nn.Module):
             with torch.no_grad():
                 q_values = self.policy_net(state)
                 action = q_values.max(1).indices.view(1, 1)
-                return action, q_values
+                return action, q_values, eps_threshold
         else:
-            return torch.tensor([[env.action_space.sample()]], device=self.device, dtype=torch.long), None
+            return torch.tensor([[env.action_space.sample()]], device=self.device, dtype=torch.long), None, eps_threshold
 
 
     def optimize_model(self) -> None:
